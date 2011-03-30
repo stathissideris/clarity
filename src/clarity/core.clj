@@ -1,5 +1,6 @@
 (ns clarity.core
-  (:require [clojure.contrib.pprint :as pp])
+  (:require [clojure.contrib.pprint :as pp]
+			[clojure.string :as str])
   (:import (javax.swing JFrame JButton JTextField)
 		   (java.awt.event ActionListener)))
 
@@ -19,7 +20,7 @@
 (def frame1
   (doto (frame)
 	(.add (doto (text "test2")
-			(.setDocument (make-document default-document))))
+			(.setDocument doc)))
 	(.pack)
 	(.setVisible true)))
 
@@ -34,14 +35,26 @@
 	   (~'insertUpdate [~'event ~'attributes] ~@updates)
 	   (~'removeUpdate [~'change] ~@removes))))
 
-(def default-document {:insert '(proxy-super insertString offset string attributes)
-					   :update '(proxy-super insertUpdate event attributes)
-					   :remove '(proxy-super removeUpdate change)})
+(def default-document {:insert #(proxy-super insertString offset string attributes)
+					   :update #(proxy-super insertUpdate event attributes)
+					   :remove #(proxy-super removeUpdate change)})
+
+(def doc (proxy [javax.swing.text.PlainDocument] []
+		   (insertString [offset string attributes]
+						 (proxy-super insertString offset (str/capitalize string) attributes))))
+						 
+(defn make-document [& fnmaps]
+  (let [inserts (remove nil? (map :insert fnmaps))
+		updates (remove nil? (map :update fnmaps))
+		removes (remove nil? (map :remove fnmaps))]
+	(proxy [javax.swing.text.PlainDocument] []
+	  (
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener
 	  (proxy [java.awt.event.ActionListener] []
 		(~'actionPerformed [~'event] ~@body))))
+
 
 (defmacro on-mouse-over [component & body]
   `(. ~component ~'addMouseListener
@@ -52,6 +65,29 @@
   `(. ~component ~'addMouseListener
 	  (proxy [java.awt.event.MouseAdapter] []
 		(mouseExited [~'event] ~@body))))
+
+
+;;how to compose the string-"mutating" functions of the document
+(def f #(if (< %1 10)
+		  (do (print %1) (+ 2 %1)) :stop))
+
+(loop [fns [f f f f f f], x 0]
+  (let [r ((first fns) x)]
+	(if (= :stop r) :stop (recur (next fns) r))))
+
+(loop [xs [1 2 3 4 5 6]]
+  (if xs (do (prn xs) (recur (next xs))) :stop))
+
+(defn- apply-recursively-stop [value functions]
+  (loop [fns functions, x value]
+	(if (not fns) x
+		(let* [f (first fns)
+			   r (f x)]
+			  (if (= :stop r) :stop
+				  (recur (next fns) r))))))
+;;;
+
+
 
 (def mouse-listener-map
   {:on-mouse-over    :mouseEntered
