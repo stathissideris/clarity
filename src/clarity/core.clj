@@ -78,13 +78,13 @@
 (loop [xs [1 2 3 4 5 6]]
   (if xs (do (prn xs) (recur (next xs))) :stop))
 
-(defn- apply-recursively-stop [value functions]
-  (loop [fns functions, x value]
-	(if (not fns) x
+(defn chain-fns-vetoable [functions & args]
+  (loop [fns functions, params args]
+	(if (not fns) params
 		(let* [f (first fns)
-			   r (f x)]
-			  (if (= :stop r) :stop
-				  (recur (next fns) r))))))
+			   results (if (coll? params) (apply f params) (f params))]
+			  (if (= :veto results) :veto
+				  (recur (next fns) results))))))
 ;;;
 
 
