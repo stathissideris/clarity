@@ -7,11 +7,11 @@
   functions in the chain returns :veto."
   [functions & args]
   (loop [fns functions, params args]
-	(if (not fns) params
-		(let* [f (first fns)
-			   results (if (coll? params) (apply f params) (f params))]
-			  (if (= :veto results) :veto
-				  (recur (next fns) results))))))
+    (if (not fns) params
+        (let* [f (first fns)
+               results (if (coll? params) (apply f params) (f params))]
+              (if (= :veto results) :veto
+                  (recur (next fns) results))))))
 
 (defn chain
   "Chains the passed functions by calling the first with the passed
@@ -19,7 +19,7 @@
   second etc."
   [functions & args]
   (loop [fns functions, params args]
-	(if (not fns) params
-		(let* [f (first fns)
-			   results (if (coll? params) (apply f params) (f params))]
-			  (recur (next fns) results)))))
+    (if (not fns) params
+        (let* [f (first fns)
+               results (if (coll? params) (apply f params) (f params))]
+              (recur (next fns) results)))))
