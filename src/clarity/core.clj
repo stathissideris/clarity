@@ -1,6 +1,7 @@
 (ns clarity.core
   (:require [clojure.contrib.pprint :as pp]
-			[clojure.string :as str])
+			[clojure.string :as str]
+			[clarity.chains :as chains])
   (:import (javax.swing JFrame JButton JTextField)
 		   (java.awt.event ActionListener)))
 
@@ -8,47 +9,75 @@
 (defmacro button [& args] `(new JButton ~@args))
 (defmacro text [& args] `(new JTextField ~@args))
 
-(def frame1
-  (doto (frame)
-	(.add (doto (button "test2")
-			(on-action (prn "clicked2"))
-			(on-mouse-over (prn "mouse over"))))
+;;(def frame1
+;;  (doto (frame)
+;;	(.add (doto (button "test2")
+;;			(on-action (prn "clicked2"))
+;;			(on-mouse-over (prn "mouse over"))))
 										;   (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-	(.pack)
-	(.setVisible true)))
+;;	(.pack)
+;;	(.setVisible true)))
 
-(def frame1
-  (doto (frame)
-	(.add (doto (text "test2")
-			(.setDocument doc)))
-	(.pack)
-	(.setVisible true)))
+;;(def frame1
+;;  (doto (frame)
+;;	(.add (doto (text "test2")
+;;			(.setDocument doc)))
+;;	(.pack)
+;;	(.setVisible true)))
 
-(.dispose frame1)
+;;(.dispose frame1)
 
-(defmacro make-document [& fnmaps]
-  (let [inserts (remove nil? (map #(:insert %1) fnmaps))
-		updates (remove nil? (map #(:update %1) fnmaps))
-		removes (remove nil? (map #(:remove %1) fnmaps))]
-	`(proxy [javax.swing.text.PlainDocument] []
-	   (~'insertString [~'offset ~'string ~'attributes] ~@inserts)
-	   (~'insertUpdate [~'event ~'attributes] ~@updates)
-	   (~'removeUpdate [~'change] ~@removes))))
+(def capitalize-document
+  {:insert (fn [component offset str attr]
+			 [component offset (str/upper-case str) attr])})
+(defn max-len-document [max]
+  {:insert (fn [component offset str attr]
+			 (if (< max (+ (count (.getText component)) (count str)))
+			   :veto
+			   [component offset str attr]))})
+(defn min-len-document [min]
+  {:remove (fn [component offset length]
+			(if (> min (- (count (.getText component)) length))
+			  :veto
+			  [component offset length]))})
 
-(def default-document {:insert #(proxy-super insertString offset string attributes)
-					   :update #(proxy-super insertUpdate event attributes)
-					   :remove #(proxy-super removeUpdate change)})
+(defn test-document []
+  (let [text-component (text)]
+	(.setText text-component "pre-")
+	(.setDocument text-component
+				  (build-document text-component
+								  (max-len-document 10)
+								  (min-len-document 4)
+								  capitalize-document))
+	(doto (frame)
+	  (.add text-component)
+	  (.pack)
+	  (.setVisible true))))
 
-(def doc (proxy [javax.swing.text.PlainDocument] []
-		   (insertString [offset string attributes]
-						 (proxy-super insertString offset (str/capitalize string) attributes))))
-						 
-(defn make-document [& fnmaps]
-  (let [inserts (remove nil? (map :insert fnmaps))
-		updates (remove nil? (map :update fnmaps))
-		removes (remove nil? (map :remove fnmaps))]
+;;works!!
+(defn build-document [component & fnmaps]
+  (let [inserts  (remove nil? (map #(:insert %1) fnmaps))
+		replaces (remove nil? (map #(:replace %1) fnmaps))
+		removes  (remove nil? (map #(:remove %1) fnmaps))]
 	(proxy [javax.swing.text.PlainDocument] []
-	  (
+	  (insertString [offset string attributes]
+					(let [results (chains/chain-vetoable inserts
+														 component offset string attributes)]
+					  (if (not= :veto results)
+						(proxy-super insertString
+									 (second results)
+									 (nth results 2)
+									 (nth results 3)))))
+	  (remove [offset length]
+			  (let [results (chains/chain-vetoable removes
+												   component offset length)]
+				(if (not= :veto results)
+				  (proxy-super remove
+							   (second results)
+							   (nth results 2)))))
+	  (replace [offset length text attributes]
+			   (proxy-super replace offset length text attributes)))))
+
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener
@@ -65,28 +94,6 @@
   `(. ~component ~'addMouseListener
 	  (proxy [java.awt.event.MouseAdapter] []
 		(mouseExited [~'event] ~@body))))
-
-
-;;how to compose the string-"mutating" functions of the document
-(def f #(if (< %1 10)
-		  (do (print %1) (+ 2 %1)) :stop))
-
-(loop [fns [f f f f f f], x 0]
-  (let [r ((first fns) x)]
-	(if (= :stop r) :stop (recur (next fns) r))))
-
-(loop [xs [1 2 3 4 5 6]]
-  (if xs (do (prn xs) (recur (next xs))) :stop))
-
-(defn chain-fns-vetoable [functions & args]
-  (loop [fns functions, params args]
-	(if (not fns) params
-		(let* [f (first fns)
-			   results (if (coll? params) (apply f params) (f params))]
-			  (if (= :veto results) :veto
-				  (recur (next fns) results))))))
-;;;
-
 
 
 (def mouse-listener-map
@@ -124,4 +131,4 @@
 				(fn [~'key ~'r old# new#]
 				  (println old# " -> " new#)))))
 
-(def-watched x (* 12 2))
+;;(def-watched x (* 12 2))
