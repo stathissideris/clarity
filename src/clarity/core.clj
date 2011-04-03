@@ -1,7 +1,9 @@
 (ns clarity.core
   (:require [clojure.contrib.pprint :as pp]
             [clojure.string :as str]
-            [clarity.chains :as chains])
+            ;;[clarity.chain :as chain]
+            ;;[clarity.document :as doc]
+            )
   (:import (javax.swing JFrame JButton JTextField)
            (java.awt.event ActionListener)))
 
@@ -25,56 +27,31 @@
 ;;	(.setVisible true)))
 ;;(.dispose frame1)
 
-(def capitalize-document
-  {:insert (fn [component offset str attr]
-             [component offset (str/upper-case str) attr])})
-(defn max-len-document [max]
-  {:insert (fn [component offset str attr]
-             (if (< max (+ (count (.getText component)) (count str)))
-               :veto
-               [component offset str attr]))})
-(defn min-len-document [min]
-  {:remove (fn [component offset length]
-             (if (> min (- (count (.getText component)) length))
-               :veto
-               [component offset length]))})
-
 (defn test-document []
   (let [text-component (text)]
     (.setText text-component "pre-")
     (.setDocument text-component
-                  (build-document text-component
-                                  (max-len-document 10)
-                                  (min-len-document 4)
-                                  capitalize-document))
+                  (doc/build-document text-component
+                                      (doc/max-len 10)
+                                      (doc/min-len 4)
+                                      doc/all-upper))
     (doto (frame)
       (.add text-component)
       (.pack)
       (.setVisible true))))
 
-;;works!!
-(defn build-document [component & fnmaps]
-  (let [inserts  (remove nil? (map #(:insert %1) fnmaps))
-        replaces (remove nil? (map #(:replace %1) fnmaps))
-        removes  (remove nil? (map #(:remove %1) fnmaps))]
-    (proxy [javax.swing.text.PlainDocument] []
-      (insertString [offset string attributes]
-                    (let [results (chains/chain-vetoable inserts
-                                                         component offset string attributes)]
-                      (if (not= :veto results)
-                        (proxy-super insertString
-                                     (second results)
-                                     (nth results 2)
-                                     (nth results 3)))))
-      (remove [offset length]
-              (let [results (chains/chain-vetoable removes
-                                                   component offset length)]
-                (if (not= :veto results)
-                  (proxy-super remove
-                               (second results)
-                               (nth results 2)))))
-      (replace [offset length text attributes]
-               (proxy-super replace offset length text attributes)))))
+(defn test-document []
+  (let [text-component (text)]
+    (.setText text-component "0x")
+    (.setDocument text-component
+                  (doc/build-document text-component
+                                      doc/all-upper
+                                      (doc/matches #"[A-Fh]*")))
+    (doto (frame)
+      (.add text-component)
+      (.pack)
+      (.setVisible true))))
+
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener
