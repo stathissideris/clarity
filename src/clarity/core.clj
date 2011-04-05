@@ -1,8 +1,8 @@
 (ns clarity.core
   (:require [clojure.contrib.pprint :as pp]
             [clojure.string :as str]
-            ;;[clarity.chain :as chain]
-            ;;[clarity.document :as doc]
+            [clarity.chain :as chain]
+            [clarity.document :as doc]
             )
   (:import (javax.swing JFrame JButton JTextField)
            (java.awt.event ActionListener)))

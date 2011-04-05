@@ -40,26 +40,20 @@
         removes  (remove nil? (map #(:remove %1) fnmaps))]
     (proxy [javax.swing.text.PlainDocument] []
       (insertString [offset string attributes]
-                    (let [results (chain/chain-vetoable inserts
-                                                        component offset string attributes)]
+                    (let [[component offset string attributes :as results]
+                          (chain/chain-vetoable inserts
+                                                component offset string attributes)]
                       (if (not= :veto results)
-                        (proxy-super insertString
-                                     (nth results 1)
-                                     (nth results 2)
-                                     (nth results 3)))))
+                        (proxy-super insertString offset string attributes))))
       (remove [offset length]
-              (let [results (chain/chain-vetoable removes
-                                                  component offset length)]
+              (let [[component offset length :as results]
+                    (chain/chain-vetoable removes
+                                          component offset length)]
                 (if (not= :veto results)
-                  (proxy-super remove
-                               (nth results 1)
-                               (nth results 2)))))
+                  (proxy-super remove offset length))))
       (replace [offset length text attributes]
-               (let [results (chain/chain-vetoable replaces
-                                                   component offset length text attributes)]
+               (let [[component offset length text attributes :as results]
+                     (chain/chain-vetoable replaces
+                                           component offset length text attributes)]
                  (if (not= :veto results)
-                   (proxy-super replace
-                                (nth results 1)
-                                (nth results 2)
-                                (nth results 3)
-                                (nth results 4))))))))
+                   (proxy-super replace offset length text attributes)))))))
