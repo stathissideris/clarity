@@ -1,9 +1,9 @@
 (ns clarity.core
   (:require [clojure.contrib.pprint :as pp]
             [clojure.string :as str]
+            [clojure.contrib.swing-utils :as sw]
             [clarity.chain :as chain]
-            [clarity.document :as doc]
-            )
+            [clarity.document :as doc])
   (:import (javax.swing JFrame JButton JTextField)
            (java.awt.event ActionListener)))
 
@@ -11,25 +11,9 @@
 (defmacro button [& args] `(new JButton ~@args))
 (defmacro text [& args] `(new JTextField ~@args))
 
-;;(def frame1
-;;  (doto (frame)
-;;	(.add (doto (button "test2")
-;;			(on-action (prn "clicked2"))
-;;			(on-mouse-over (prn "mouse over"))))
-                                        ;   (.setDefaultCloseOperation JFrame/EXIT_ON_CLOSE)
-;;	(.pack)
-;;	(.setVisible true)))
-;;(def frame1
-;;  (doto (frame)
-;;	(.add (doto (text "test2")
-;;			(.setDocument doc)))
-;;	(.pack)
-;;	(.setVisible true)))
-;;(.dispose frame1)
-
 (defn test-document []
   (let [text-component (text)]
-    (.setText text-component "pre-")
+    (sw/do-swing (.setText text-component "pre-"))
     (.setDocument text-component
                   (doc/build-document text-component
                                       (doc/max-len 10)
@@ -46,12 +30,27 @@
     (.setDocument text-component
                   (doc/build-document text-component
                                       doc/all-upper
-                                      (doc/matches #"[A-Fh]*")))
+                                      ))
     (doto (frame)
       (.add text-component)
       (.pack)
       (.setVisible true))))
 
+
+(defn test-document []
+  (let [text-component (text)]
+    (.setDocument text-component
+                  (doc/build-document text-component
+                                      doc/all-upper
+                                      (doc/matches #"[A-F0-9]*")))
+    (.setText text-component "0X")
+    (doto (frame)
+      (.add text-component)
+      (.pack)
+      (.setVisible true))))
+
+(defn -main []
+  (test-document))
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener

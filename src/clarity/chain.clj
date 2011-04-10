@@ -1,19 +1,19 @@
 (ns ^{:doc "Functions to \"pipe\" functions together by passing the
 	output of one to the input of the next."}
   clarity.chain
-  (:require [clarity.debug :as d]))
+  (:require
+   [clojure.contrib.logging :as log]))
 
 (defn chain-vetoable
   "Chains the passed functions. Stops and returns :veto if one of the
    functions in the chain returns :veto."
   [functions & args]
   (loop [fns functions, params args]
-    ;;(d/debug-values params)
     (if (seq fns)
-      (let* [f (first fns)
-             results (if (coll? params) (apply f params) (f params))]
-            (if (= :veto results) :veto
-                (recur (rest fns) results)))
+      (let [f (first fns)
+            results (if (coll? params) (apply f params) (f params))]
+        (if (= :veto results) :veto
+            (recur (rest fns) results)))
       params)))
 
 ;;this looks A LOT like comp, see if you can simplify it
@@ -25,7 +25,7 @@
   [functions & args]
   (loop [fns functions, params args]
     (if (seq fns)
-      (let* [f (first fns)
+      (let [f (first fns)
              results (if (coll? params) (apply f params) (f params))]
-            (recur (rest fns) results))
+        (recur (rest fns) results))
       params)))
