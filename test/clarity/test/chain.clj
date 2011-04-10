@@ -96,3 +96,14 @@
                             (finder #"ab")
                             (appender "c")]
                             "S")))))
+
+(deftest chain-vetoable-with-hex
+  (is (= :veto
+         (chain-vetoable [(fn [a b s] [a b "s"])
+                          (fn [a b s] (if (re-matches #"[A-F]+" s) [a b s] :veto))]
+                         "_" "_" "_")))
+  (is (= ["a" "b" "F"]
+         (chain-vetoable [(fn [a b s] [a b (str/upper-case s)])
+                          (fn [a b s] (if (re-matches #"[A-F]+" s) [a b s] :veto))]
+                         "a" "b" "f"))))
+                         
