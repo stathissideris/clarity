@@ -20,8 +20,7 @@
 ;;https://github.com/clojure/clojure/blob/f86db9cc68773dd3e4a166c1ff7b81e4a98aa602/src/clj/clojure/core.clj#L1936
 (defn chain
   "Chains the passed functions by calling the first with the passed
-   arguments and applying the result(s) of the the first function to the
-   second etc."
+   arguments and applying the result(s) to the second etc."
   [functions & args]
   (loop [fns functions, params args]
     (if (seq fns)
