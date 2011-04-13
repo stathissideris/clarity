@@ -3,13 +3,16 @@
             [clojure.string :as str]
             [clojure.contrib.swing-utils :as sw]
             [clarity.chain :as chain]
-            [clarity.document :as doc])
-  (:import (javax.swing JFrame JButton JTextField)
+            [clarity.document :as doc]
+            [clarity.renderer :as render]
+            [clarity.list :as l])
+  (:import (javax.swing JFrame JButton JTextField JList JScrollPane)
            (java.awt.event ActionListener)))
 
 (defmacro frame [& args] `(new JFrame ~@args))
 (defmacro button [& args] `(new JButton ~@args))
 (defmacro text [& args] `(new JTextField ~@args))
+(defmacro jlist [& args] `(new JList ~@args))
 
 (defn test-document []
   (let [text-component (text)]
@@ -49,8 +52,20 @@
       (.pack)
       (.setVisible true))))
 
+(defn test-list-render []
+  (let [list-comp (jlist (l/immutable-list-model
+                          ["ena" "dyo" "tria" "tessara" "pede"]))]
+    (.setCellRenderer list-comp
+                      (render/make-list-renderer
+                       render/stripy
+                       render/stripy-selection))
+    (doto (frame)
+      (.add (new JScrollPane list-comp))
+      (.pack)
+      (.setVisible true))))
+
 (defn -main []
-  (test-document))
+  (test-list-render))
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener
