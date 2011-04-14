@@ -1,13 +1,26 @@
 (ns clarity.renderer
   (require [clarity.chain :as chain]
+           [clarity.utils :as utils]
            [clojure.contrib.string :as str])
   (import [java.awt Color]))
 
 (def background1 java.awt.Color/white)
-(def background2 (new Color 236 241 245))
-(def selection-background1 (new Color 145 119 227))
-(def selection-background2 (new Color 104 66 227))
+(def background2 (new Color 240 240 240))
+
 (def selection-foreground java.awt.Color/white)
+;;(def selection-background2 (utils/get-laf-property "List.selectionBackground"))
+(def selection-background2 (new Color 49 106 197))
+(def selection-background1 (.brighter selection-background2))
+
+(def success-background1 (new Color 80 217 80))
+(def success-background2 (.brighter success-background1))
+
+(def error-background1 (new Color 255 192 203))
+(def error-background2 (new Color 255 220 226))
+
+(def selection-error-background1 (new Color 150 148 199))
+(def selection-error-background2 (new Color 150 162 211))
+
 
 (defn stripy [component list-component value index selected focused]
   (if (even? index)
