@@ -64,8 +64,20 @@
       (.pack)
       (.setVisible true))))
 
+(def ldata (ref ["ena" "dyo" "tria" "tessara" "pede"]))
+(defn test-list-render2 []
+  (let [list-comp (jlist (l/mutable-list-model ldata))]
+    (.setCellRenderer list-comp
+                      (render/make-list-renderer
+                       render/stripy
+                       render/stripy-selection))
+    (doto (frame)
+      (.add (new JScrollPane list-comp))
+      (.pack)
+      (.setVisible true))))
+
 (defn -main []
-  (test-list-render))
+  (test-list-render2))
 
 (defmacro on-action [component & body]
   `(. ~component ~'addActionListener
