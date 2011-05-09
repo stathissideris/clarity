@@ -1,5 +1,4 @@
 (ns clarity.list
-  (:require [clojure.contrib.swing-utils :as swing])
   (:import [javax.swing AbstractListModel]))
 
 (defn immutable-list-model [data]
