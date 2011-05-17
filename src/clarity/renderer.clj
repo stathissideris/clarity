@@ -43,6 +43,11 @@
       (.setBackground component color2))
     [component list-component value index selected focused]))
 
+(defn make-label [f]
+  (fn [component list-component value index selected focused]
+    (.setText component (f value index selected focused))
+    [component list-component value index selected focused]))
+
 ;;(defn make-bold [str-ref]
 ;;  (fn [component list-component value index selected focused]
 ;;    (if (string? value)      
