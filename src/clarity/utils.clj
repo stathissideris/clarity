@@ -1,5 +1,15 @@
-(ns clarity.utils)
+(ns clarity.utils
+  (:import [javax.swing UIManager JFrame]))
 
+(defn show-comp [comp]
+  (doto (JFrame.)
+    (.add comp)
+    (.pack)
+    (.setVisible true)))
+
+(defn set-system-laf []
+  (javax.swing.UIManager/setLookAndFeel
+   (javax.swing.UIManager/getCrossPlatformLookAndFeelClassName)))
 
 (defn get-laf-properties
   ([] (get-laf-properties nil))
