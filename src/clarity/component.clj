@@ -12,13 +12,14 @@
 (defn scroll-pane [comp]
   (JScrollPane. comp))
 
-(defn make-class-name [component]
-  (let [name (name component)
+(defn make-class-name [component & flags]
+  (let [awt (= :awt (first flags))
+        name (name component)
         prefix (if (namespace component)
-                 (str "javax.swing."
-                      (namespace component)
-                      ".J")
-                 "javax.swing.J")]
+                 (if awt
+                   (str "java.awt." (namespace component) ".")
+                   (str "javax.swing." (namespace component) ".J"))
+                 (if awt "java.awt." "javax.swing.J"))]
   (apply str prefix
          (map str/capitalize
               (str/split name #"-")))))
