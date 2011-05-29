@@ -2,9 +2,11 @@
   (:use [clojure.contrib.str-utils :only (re-sub)]))
 
 (defn- unmangle
-  "Given the name of a class that implements a Clojure function, returns the function's name in Clojure. Note: If the true Clojure function name
-  contains any underscores (a rare occurrence), the unmangled name will
-  contain hyphens at those locations instead. See http://www.mail-archive.com/clojure@googlegroups.com/msg13018.html"
+  "Given the name of a class that implements a Clojure function,
+  returns the function's name in Clojure. Note: If the true Clojure
+  function name contains any underscores (a rare occurrence), the
+  unmangled name will contain hyphens at those locations instead. See
+  http://www.mail-archive.com/clojure@googlegroups.com/msg13018.html"
   [class-name]
   (.replace
    (re-sub #"^(.+)\$(.+)__\d+$" "$1/$2" class-name)

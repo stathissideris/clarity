@@ -23,16 +23,23 @@
          (map str/capitalize
               (str/split name #"-")))))
 
-(defmacro make
-  "Creates a Swing component which also implements the
-  clarity.style.Styleable interface. The first parameter is a
-  lisp-ified version of the normal names of swing components."
-  
-  [component & args]
-  ;;TODO: really ref?
+(defmacro make-component [component & args]
   (let [clazz (symbol (make-class-name component))]
+    ;;TODO: really ref?
     `(let [~'st (ref #{})]
        (proxy [~clazz clarity.style.Styleable] [~@args]
          (~'getStyles [] (deref ~'st))
          (~'addStyle [~'s] (alter ~'st conj ~'s))
          (~'removeStyle [~'s] (alter ~'st disj ~'s))))))
+
+(defmacro make
+  "Creates a Swing component which also implements the
+  clarity.style.Styleable interface. The first parameter is a
+  lisp-ified version of the normal names of swing components."
+  [& args]
+  (if (list? (first args))
+    (let [[[component & args] & expressions] args]
+      `(doto (make-component ~component ~@args)
+         ~@expressions))
+    (let [[component & args] args]
+      `(make-component ~component ~@args))))
