@@ -12,6 +12,18 @@
 (defn scroll-pane [comp]
   (JScrollPane. comp))
 
+(defn make-method-name [name]
+  (let [[first & rest] (str/split name #"-")]
+    (symbol (apply str "." first (map str/capitalize rest)))))
+
+(defmacro do-java [component & expressions]
+  `(~'doto ~component
+     ~@(map (fn [exp] 
+              (conj
+               (drop 1 exp)
+               (make-method-name (name (first exp)))))
+            expressions)))
+
 (defn make-class-name [component & flags]
   (let [awt (= :awt (first flags))
         name (name component)
@@ -40,7 +52,7 @@
   [& args]
   (if (list? (first args))
     (let [[[component & args] & expressions] args]
-      `(doto (make-component ~component ~@args)
-         ~@expressions))
+      `(do-java (make-component ~component ~@args)
+                ~@expressions))
     (let [[component & args] args]
       `(make-component ~component ~@args))))
