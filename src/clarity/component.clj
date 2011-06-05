@@ -12,9 +12,10 @@
 (defn scroll-pane [comp]
   (JScrollPane. comp))
 
-(defn make-method-name [name]
-  (let [[first & rest] (str/split name #"-")]
-    (symbol (apply str "." first (map str/capitalize rest)))))
+;not used
+;(defn make-method-name [name]
+;  (let [[first & rest] (str/split name #"-")]
+;    (symbol (apply str "." first (map str/capitalize rest)))))
 
 (defn make-setter-name [name]
   (let [pieces (str/split name #"-")]
@@ -31,7 +32,7 @@
             expressions)))
 
 (defn make-class-name [component & flags]
-  (let [awt (= :awt (first flags))
+  (let [awt (some #{:awt} flags)
         name (name component)
         prefix (if (namespace component)
                  (if awt
@@ -45,10 +46,11 @@
 (defmacro make-component [component & args]
   (let [clazz (if (keyword? component)
                 (symbol (apply make-class-name component args))
-                component)]
+                component)
+        params (remove #{:awt} args)]
     ;;TODO: really ref?
     `(let [~'st (ref #{})]
-       (proxy [~clazz clarity.style.Styleable] [~@args]
+       (proxy [~clazz clarity.style.Styleable] [~@params]
          (~'getStyles [] (deref ~'st))
          (~'addStyle [~'s] (alter ~'st conj ~'s))
          (~'removeStyle [~'s] (alter ~'st disj ~'s))))))
