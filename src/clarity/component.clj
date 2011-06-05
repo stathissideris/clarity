@@ -16,12 +16,18 @@
   (let [[first & rest] (str/split name #"-")]
     (symbol (apply str "." first (map str/capitalize rest)))))
 
-(defmacro do-java [component & expressions]
+(defn make-setter-name [name]
+  (let [pieces (str/split name #"-")]
+    (symbol (apply str ".set" (map str/capitalize pieces)))))
+
+(defmacro do-component [component & expressions]
   `(~'doto ~component
      ~@(map (fn [exp] 
               (conj
                (drop 1 exp)
-               (make-method-name (name (first exp)))))
+               (if (keyword? (first exp))
+                 (make-setter-name (name (first exp)))
+                 (first exp))))
             expressions)))
 
 (defn make-class-name [component & flags]
@@ -37,7 +43,9 @@
               (str/split name #"-")))))
 
 (defmacro make-component [component & args]
-  (let [clazz (symbol (make-class-name component))]
+  (let [clazz (if (keyword? component)
+                (symbol (make-class-name component))
+                component)]
     ;;TODO: really ref?
     `(let [~'st (ref #{})]
        (proxy [~clazz clarity.style.Styleable] [~@args]
@@ -52,7 +60,7 @@
   [& args]
   (if (list? (first args))
     (let [[[component & args] & expressions] args]
-      `(do-java (make-component ~component ~@args)
-                ~@expressions))
+      `(do-component (make-component ~component ~@args)
+                     ~@expressions))
     (let [[component & args] args]
       `(make-component ~component ~@args))))
