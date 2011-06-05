@@ -44,7 +44,7 @@
 
 (defmacro make-component [component & args]
   (let [clazz (if (keyword? component)
-                (symbol (make-class-name component))
+                (symbol (apply make-class-name component args))
                 component)]
     ;;TODO: really ref?
     `(let [~'st (ref #{})]
