@@ -25,7 +25,7 @@
   (component/make (:label
                    (str/capitalize (str/replace l "-" " ")))))
 
-(defn make-simple-form [& components]
+(defn simple-form [& components]
   (apply mig/miglayout (component/make :panel)
          :layout "wrap 2"
          :column "[left][grow,fill]"
