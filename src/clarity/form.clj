@@ -38,12 +38,15 @@
           (recur (next (nnext f)) (conj tok (apply vector (take 3 f))))
           :else (recur (nnext f) (conj tok (apply vector (take 2 f)))))))
 
+(defn boolean? [x] (= java.lang.Boolean (class x)))
+
 (defn make-field [param]
   (cond (keyword? param)
         (cond (= :number param) (component/make :text-field)
               (= :string param) (component/make :text-field))
         (string? param) (component/make (:text-field param))
         (number? param) (component/make (:text-field (str param)))
+        (boolean? param) (component/make (:check-box) (:selected param))
         (sequential? param) (component/make
                              (:combo-box (to-array param)))))
 
