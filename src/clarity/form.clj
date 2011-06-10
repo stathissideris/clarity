@@ -4,6 +4,11 @@
             [clarity.component :as component]
             clarity.list))
 
+(def field-flags #{:full-width})
+(def header-flags #{})
+(def group-flags #{})
+(def text-flags #{:rich})
+
 (defn interpose-every [every sep coll]
   (let [piece (fn piece [sep coll every]
                 (when (and coll (not (empty? coll)))
@@ -40,26 +45,42 @@
 
 (defn boolean? [x] (= java.lang.Boolean (class x)))
 
-(defn make-field [param]
-  (cond (keyword? param)
-        (cond (= :number param) (component/make :text-field)
-              (= :string param) (component/make :text-field))
-        (string? param) (component/make (:text-field param))
-        (number? param) (component/make (:text-field (str param)))
-        (boolean? param) (component/make (:check-box) (:selected param))
-        (sequential? param) (component/make
-                             (:combo-box (to-array param)))))
+(defn extra-params? [token]
+  (= 3 (count token)))
 
-(defn make-label [l]
-  (component/make (:label
-                   (str/capitalize (str/replace l "-" " ")))))
+(defn make-field [token]
+  (let [param (second token)]
+    (cond (keyword? param)
+          (cond (= :number param) (component/make :text-field)
+                (= :string param) (component/make :text-field))
+          (string? param) (component/make (:text-field param))
+          (number? param) (component/make (:text-field (str param)))
+          (boolean? param) (component/make (:check-box) (:selected param))
+          (sequential? param) (component/make
+                               (:combo-box (to-array param))))))
+
+(defn make-label [text]
+  (component/make (:label text)))
+
+(defn destructure-token-flags [flags token]
+  (apply destructure-flags flags (nth token 2)))
+
+(defn log [x] (print x) x)
+
+(defn make-label-text [token]
+  (if (extra-params? token)
+    (let [{:keys [args]} (destructure-token-flags field-flags token)]
+      (if (contains? args :label)
+        (:label args)
+        (make-label-text (butlast token))))
+    (str/capitalize (str/replace (name (first token)) "-" " "))))
 
 (defn form [& components]
   (apply mig/miglayout (component/make :panel)
          :layout "wrap 2"
          :column "[left][grow,fill]"
          (reduce concat
-                 (map #(list (make-label (name (first %)))
-                             (make-field (second %))
+                 (map #(list (make-label (make-label-text %))
+                             (make-field %)
                              :sg) ;;to achieve equal heights
-                      (partition 2 components)))))
+                      (tokens components)))))
