@@ -1,10 +1,10 @@
 (ns clarity.style)
 
-(defn styles [comp] (.getStyles comp))
-(defn add-style [comp s] (.addStyle comp s))
-(defn remove-style [comp s] (.removeStyle comp s))
+(defn categories [comp] (.getCategories comp))
+(defn add-category [comp s] (.addCategory comp s))
+(defn remove-category [comp s] (.removeCategory comp s))
 
 (definterface Styleable
-  (getStyles [])
-  (addStyle [s])
-  (removeStyle [s]))
+  (getCategories [])
+  (addCategory [s])
+  (removeCategory [s]))
