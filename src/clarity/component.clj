@@ -14,6 +14,10 @@
 (defn scroll-pane [comp]
   (JScrollPane. comp))
 
+(defn categories [comp] (.getCategories comp))
+(defn add-category [comp s] (.addCategory comp s))
+(defn remove-category [comp s] (.removeCategory comp s))
+
 (defprotocol HasValue
   (value [this])
   (set-value [this value]))
@@ -112,9 +116,9 @@
     ;;TODO: really ref?
     `(let [~'st (ref #{})]
        (proxy [~clazz clarity.style.Styleable] [~@params]
-         (~'.getCategories [~'_] (deref ~'st))
-         (~'.addCategory [~'_ ~'s] (alter ~'st conj ~'s))
-         (~'.removeCategory [~'_ ~'s] (alter ~'st disj ~'s))))))
+         (~'getCategories [] (deref ~'st))
+         (~'addCategory [~'s] (alter ~'st conj ~'s))
+         (~'removeCategory [~'s] (alter ~'st disj ~'s))))))
 
 (defmacro make
   "Creates a Swing component which also implements the
