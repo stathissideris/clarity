@@ -49,15 +49,18 @@
   (= 3 (count token)))
 
 (defn make-field [token]
-  (let [param (second token)]
-    (cond (keyword? param)
-          (cond (= :number param) (component/make :text-field)
-                (= :string param) (component/make :text-field))
-          (string? param) (component/make (:text-field param))
-          (number? param) (component/make (:text-field (str param)))
-          (boolean? param) (component/make (:check-box) (:selected param))
-          (sequential? param) (component/make
-                               (:combo-box (to-array param))))))
+  (let [param (second token)
+        field
+        (cond (keyword? param)
+              (cond (= :number param) (component/make :text-field)
+                    (= :string param) (component/make :text-field))
+              (string? param) (component/make (:text-field param))
+              (number? param) (component/make (:text-field (str param)))
+              (boolean? param) (component/make (:check-box) (:selected param))
+              (sequential? param) (component/make
+                                   (:combo-box (to-array param))))]
+    (if (nil? (.getName field)) (.setName field (make-label-text token)))
+    field))
 
 (defn make-label [text]
   (component/make (:label text)))
