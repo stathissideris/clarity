@@ -33,14 +33,21 @@
   (value [this] (.isSelected this))
   (set-value [this value] (.setSelected this value)))
 
+(defn component-name [component]
+  (if (.getName component)
+    (.getName component)
+    (str (.getName (.getClass component)) "#" (.hashCode component))))
+
 (extend-type java.awt.Container
   HasValue
   (value [this]
-    (map #(value %)
-         (filter
-          #(satisfies? HasValue %) (.getComponents this))))
-  (set-value [this value]))
-  
+    (apply hash-map
+           (apply concat
+                  (map (fn [x] [(component-name x) (value x)])
+                       (filter
+                        #(satisfies? HasValue %) (.getComponents this))))))
+           (set-value [this value]))
+
 (defprotocol HasSelection
   (selection [this])
   (set-selection [this selection]))
@@ -105,9 +112,9 @@
     ;;TODO: really ref?
     `(let [~'st (ref #{})]
        (proxy [~clazz clarity.style.Styleable] [~@params]
-         (~'.getCategories [] (deref ~'st))
-         (~'.addCategory [~'s] (alter ~'st conj ~'s))
-         (~'.removeCategory [~'s] (alter ~'st disj ~'s))))))
+         (~'.getCategories [~'_] (deref ~'st))
+         (~'.addCategory [~'_ ~'s] (alter ~'st conj ~'s))
+         (~'.removeCategory [~'_ ~'s] (alter ~'st disj ~'s))))))
 
 (defmacro make
   "Creates a Swing component which also implements the
