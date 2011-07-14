@@ -3,7 +3,11 @@
   (:import [clarity.style.Styleable]
            [javax.swing JSplitPane JScrollPane]))
 
-(def special-keywords #{:category})
+(definterface Component
+  (getId []))
+(defn id [c] (.getId c))
+
+(def special-setters #{:id :awt :category})
 
 (defn split-pane [orientation one two]
   (JSplitPane. (if (= :horizontal orientation)
@@ -47,10 +51,10 @@
   (value [this]
     (apply hash-map
            (apply concat
-                  (map (fn [x] [(component-name x) (value x)])
+                  (map (fn [x] [(id x) (value x)])
                        (filter
                         #(satisfies? HasValue %) (.getComponents this))))))
-           (set-value [this value]))
+  (set-value [this value]))
 
 (defprotocol HasSelection
   (selection [this])
@@ -72,9 +76,28 @@
   (set-selection [this selection] (.setSelectionPaths this selection)))
 
                                         ;not used
-;(defn make-method-name [name]
-;  (let [[first & rest] (str/split name #"-")]
-;    (symbol (apply str "." first (map str/capitalize rest)))))
+                                        ;(defn make-method-name [name]
+                                        ;  (let [[first & rest] (str/split name #"-")]
+                                        ;    (symbol (apply str "." first (map str/capitalize rest)))))
+
+(defn special-setter-form? [[k v]]
+  (contains? special-setters k))
+
+(defn pairs-to-map [p]
+  (into {} (for [[k v] p] [k v])))
+
+(defn parse-component-params [params]
+  (let [const-params (remove list? params)
+        special-setter-forms (pairs-to-map
+                              (filter special-setter-form?
+                                      (filter list? params)))
+        setter-forms (remove special-setter-form?
+                             (filter list? params))]
+    {:constructor (remove #{:awt} const-params)
+     :special-setter-forms (if (some #{:awt} const-params)
+                             (merge {:awt true} special-setter-forms)
+                             special-setter-forms)
+     :setter-forms setter-forms}))
 
 (defn make-setter-name [name]
   (let [pieces (str/split name #"-")]
@@ -87,17 +110,15 @@
 (defmacro do-component [component & expressions]
   `(~'doto ~component
      ~@(map (fn [exp]
-              (if (contains? special-keywords (first exp))
-                (do-special-keyword exp)
-                (conj
-                 (drop 1 exp)
-                 (if (keyword? (first exp))
-                   (make-setter-name (name (first exp)))
-                   (first exp)))))
+              (conj
+               (drop 1 exp)
+               (if (keyword? (first exp))
+                 (make-setter-name (name (first exp)))
+                 (first exp))))
             expressions)))
 
-(defn make-class-name [component & flags]
-  (let [awt (some #{:awt} flags)
+(defn make-class-name [component flags]
+  (let [awt (contains? flags :awt)
         name (name component)
         prefix (if (namespace component)
                  (if awt
@@ -108,26 +129,34 @@
          (map str/capitalize
               (str/split name #"-")))))
 
-(defmacro make-component [component & args]
+(defmacro make-component [component const-params special-setters]
   (let [clazz (if (keyword? component)
-                (symbol (apply make-class-name component args))
-                component)
-        params (remove #{:awt} args)]
+                (symbol (make-class-name component special-setters))
+                component)]
     ;;TODO: really ref?
-    `(let [~'st (ref #{})]
-       (proxy [~clazz clarity.style.Styleable] [~@params]
-         (~'getCategories [] (deref ~'st))
-         (~'addCategory [~'s] (alter ~'st conj ~'s))
-         (~'removeCategory [~'s] (alter ~'st disj ~'s))))))
+    `(let [~'id ~(if (contains? special-setters :id)
+                   (:id special-setters))
+           ~'cat (ref #{})]
+       (proxy [~clazz Component clarity.style.Styleable] [~@const-params]
+         (~'getId [] ~'id)
+         (~'getCategories [] (deref ~'cat))
+         (~'addCategory [~'s] (alter ~'cat conj ~'s))
+         (~'removeCategory [~'s] (alter ~'cat disj ~'s))))))
 
 (defmacro make
   "Creates a Swing component which also implements the
   clarity.style.Styleable interface. The first parameter is a
   lisp-ified version of the normal names of swing components."
   [& args]
-  (if (list? (first args))
-    (let [[[component & args] & expressions] args]
-      `(do-component (make-component ~component ~@args)
-                     ~@expressions))
-    (let [[component & args] args]
-      `(make-component ~component ~@args))))
+  (let [{:keys [constructor
+                special-setter-forms
+                setter-forms]} (parse-component-params args)]
+    (if (empty? setter-forms)
+      `(make-component ~(first constructor)
+                       ~(rest constructor)
+                       ~special-setter-forms)
+      `(do-component
+        (make-component ~(first constructor)
+                        ~(rest constructor)
+                        ~special-setter-forms)
+        ~@setter-forms))))
