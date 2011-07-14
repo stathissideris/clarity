@@ -53,7 +53,8 @@
            (apply concat
                   (map (fn [x] [(id x) (value x)])
                        (filter
-                        #(satisfies? HasValue %) (.getComponents this))))))
+                        #(and (id %)
+                              (satisfies? HasValue %)) (.getComponents this))))))
   (set-value [this value]))
 
 (defprotocol HasSelection

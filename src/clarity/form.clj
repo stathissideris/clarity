@@ -48,27 +48,8 @@
 (defn extra-params? [token]
   (= 3 (count token)))
 
-(defn make-field [token]
-  (let [param (second token)
-        field
-        (cond (keyword? param)
-              (cond (= :number param) (component/make :text-field)
-                    (= :string param) (component/make :text-field))
-              (string? param) (component/make (:text-field param))
-              (number? param) (component/make (:text-field (str param)))
-              (boolean? param) (component/make (:check-box) (:selected param))
-              (sequential? param) (component/make
-                                   (:combo-box (to-array param))))]
-    (if (nil? (.getName field)) (.setName field (make-label-text token)))
-    field))
-
-(defn make-label [text]
-  (component/make (:label text)))
-
 (defn destructure-token-flags [flags token]
   (apply destructure-flags flags (nth token 2)))
-
-(defn log [x] (print x) x)
 
 (defn make-label-text [token]
   (if (extra-params? token)
@@ -77,6 +58,30 @@
         (:label args)
         (make-label-text (butlast token))))
     (str/capitalize (str/replace (name (first token)) "-" " "))))
+
+(defn make-field [token]
+  (let [[id param] token
+        field
+        (cond (keyword? param)
+              (cond (= :number param) (component/make :text-field (:id id))
+                    (= :string param) (component/make :text-field (:id id)))
+              (string? param) (component/make :text-field
+                                              (:text param) (:id id))
+              (number? param) (component/make :text-field
+                                              (:text (str param)) (:id id))
+              (boolean? param) (component/make :check-box
+                                               (:selected param)
+                                               (:id id))
+              (sequential? param) (let [data (to-array param)]
+                                    (component/make
+                                     :combo-box data (:id id))))] ;;let necessary because of syntax limitation
+    (if (nil? (.getName field)) (.setName field (make-label-text token)))
+    field))
+
+(defn make-label [text]
+  (component/make :label text))
+
+(defn log [x] (print x) x)
 
 (defn form [& components]
   (apply mig/miglayout (component/make :panel)
