@@ -160,7 +160,7 @@
 
     `(reify ~interface
        ~@(map (fn [method] `(~method [~'_ ~'_])) missing-methods)
-       ~@(map (fn [method body] `(~method [~'this ~'event] ~@body))
+       ~@(map (fn [method body] `(~method [~'listener ~'event] ~@body))
            (map #(lookup-event-keyword (first %)) handlers)
            (map rest handlers)))))
 

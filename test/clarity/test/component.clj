@@ -53,8 +53,8 @@
 
 (deftest make-with-events
   (let [button (make :button "testing events"
-                     (:on-mouse-exited (.setText component "exited"))
-                     (:on-mouse-over (.setText component "over")))])
+                     (:on-mouse-exited (.setText this "exited"))
+                     (:on-mouse-over (.setText this "over")))])
   (is (= 1 1)))
 
 ;;;;

@@ -152,7 +152,7 @@
         `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
 
 (defn process-event-form [[key body]]
-  `(let [~'component ~'result]
+  `(let [~'this ~'result]
      (~(event/listener-keyword-to-adder key)
       ~'result (event/listener ~key ~@body))))
 
@@ -204,5 +204,5 @@
 
 ;;example with events
 #_(show-comp (make :button "testing events"
-                 (:on-mouse-exited (.setText component "exited"))
-                 (:on-mouse-over (.setText component "over"))))
+                 (:on-mouse-exited (.setText this "exited"))
+                 (:on-mouse-over (.setText this "over"))))
