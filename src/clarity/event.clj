@@ -41,7 +41,7 @@
         MenuDragMouseListener
         MenuKeyListener
         MenuListener
-        MouseInputListener
+        ;;MouseInputListener ;;too much overlap with MouseListener
         PopupMenuListener
         TableColumnModelListener
         TableModelListener
@@ -55,11 +55,11 @@
   {:on-action
    ["java.awt.event.ActionListener" "actionPerformed"]
    :on-click
-   ["javax.swing.event.MouseInputListener" "mouseClicked"]
+   ["javax.swing.event.MouseListener" "mouseClicked"]
    :on-mouse-over
-   ["javax.swing.event.MouseInputListener" "mouseEntered"]
+   ["javax.swing.event.MouseListener" "mouseEntered"]
    :on-mouse-out
-   ["javax.swing.event.MouseInputListener" "mouseExited"]})
+   ["javax.swing.event.MouseListener" "mouseExited"]})
 ;;TODO on double click
 ;;TODO on right click
 
@@ -87,6 +87,13 @@
          (str2/replace "javax.swing.event." "")
          (split-camel))))))
 
+(defn listener-keyword-to-adder [key]
+  (symbol
+   (str ".add"
+        (apply str
+               (map str2/capitalize
+                    (str2/split (name key) #"-"))) "Listener")))
+
 (defn make-event-keyword
   "Make the event keyword used in the components special setters from
   a method object."
@@ -101,10 +108,6 @@
 ;;   (first-lower
 ;;    (apply str (map str2/capitalize
 ;;                    (drop 1 (str2/split (name key) #"-")))))))
-
-(defn lookup-event-keyword [key]
-  (symbol
-   (second (get event-map key))))
 
 (def listener-map
   (into {}
@@ -128,6 +131,10 @@
                       [(.getName clazz)
                        (.getName method)]])))
                (concat awt-listeners swing-listeners))))))
+
+(defn lookup-event-keyword [key]
+  (symbol
+   (second (get event-map key))))
 
 (reify java.awt.event.KeyListener
   (keyPressed [this event] (print "pressed"))

@@ -51,6 +51,12 @@
     (is (= #{:a :b} (.getCategories button1)))
     (is (= #{:c :d} (.getCategories button2)))))
 
+(deftest make-with-events
+  (let [button (make :button "testing events"
+                     (:on-mouse-exited (.setText component "exited"))
+                     (:on-mouse-over (.setText component "over")))])
+  (is (= 1 1)))
+
 ;;;;
 
 (deftest value-of-single-field

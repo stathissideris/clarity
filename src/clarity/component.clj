@@ -1,7 +1,14 @@
 (ns clarity.component
-  (:require [clojure.string :as str])
+  (:require [clojure.string :as str]
+            [clarity.event :as event])
   (:import [clarity.style.Styleable]
            [javax.swing JSplitPane JScrollPane]))
+
+(ns clarity.event)
+(declare event-map)
+(declare make-listener-keyword)
+(declare listener-keyword-to-adder)
+(ns clarity.component)
 
 (definterface Component
   (getId []))
@@ -76,21 +83,42 @@
   (selection [this] (.getSelectionPaths this))
   (set-selection [this selection] (.setSelectionPaths this selection)))
 
-(defn special-setter-form? [[k v]]
-  (contains? special-setters k))
+;;;;;;;;;;;;
+
+(defn special-setter-form? [form]
+  (if (list? form)
+    (let [[k v] form]
+      (contains? special-setters k))))
+
+(defn event-form? [form]
+  (if (list? form)
+    (let [[k v] form]
+      (contains? (into #{} (keys clarity.event/event-map)) k))))
+;;TODO optimize?
+
+(defn event-form-listener [[k v]]
+  (event/make-listener-keyword
+   (first (get event/event-map k))))
+
+(defn simple-setter-form? [form]
+  (and (list? form)
+       (not (special-setter-form? form))
+       (not (event-form? form))))
 
 (defn pairs-to-map [p]
   (into {} (for [[k & v] p] [k (apply vector v)])))
 
 (defn parse-component-params [params]
+  {:pre [(keyword? (first params))]}
   (let [const-params (remove list? params)
         special-setter-forms (pairs-to-map
-                              (filter special-setter-form?
-                                      (filter list? params)))
-        setter-forms (remove special-setter-form?
-                             (filter list? params))]
+                              (filter special-setter-form? params))
+        event-forms (group-by event-form-listener
+                              (filter event-form? params))
+        setter-forms (filter simple-setter-form? params)]
     {:constructor const-params
      :special-setter-forms special-setter-forms
+     :event-forms event-forms
      :setter-forms setter-forms}))
 
 (defn make-setter-name [name]
@@ -123,7 +151,16 @@
   (cond (or (= :category key) (= :categories key))
         `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
 
-(defmacro make-component [component const-params special-setters]
+(defn process-event-form [[key body]]
+  `(let [~'component ~'result]
+     (~(event/listener-keyword-to-adder key)
+      ~'result (event/listener ~key ~@body))))
+
+(defmacro make-component [component const-params
+                          special-setters event-forms]
+  {:pre [(sequential? const-params)
+         (map? special-setters)
+         (map? event-forms)]}
   (let [clazz (if (keyword? component)
                 (symbol (make-class-name component))
                 component)
@@ -141,6 +178,7 @@
              (~'addCategory [~'s] (alter ~'cat conj ~'s))
              (~'removeCategory [~'s] (alter ~'cat disj ~'s)))]
        ~@(map process-special-setter special-setters)
+       ~@(map process-event-form event-forms)
        ~'result)))
 
 (defmacro make
@@ -150,13 +188,21 @@
   [& args]
   (let [{:keys [constructor
                 special-setter-forms
+                event-forms
                 setter-forms]} (parse-component-params args)]
     (if (empty? setter-forms)
       `(make-component ~(first constructor)
                        ~(rest constructor)
-                       ~special-setter-forms)
+                       ~special-setter-forms
+                       ~event-forms)
       `(do-component
         (make-component ~(first constructor)
                         ~(rest constructor)
-                        ~special-setter-forms)
+                        ~special-setter-forms
+                        ~event-forms)
         ~@setter-forms))))
+
+;;example with events
+#_(show-comp (make :button "testing events"
+                 (:on-mouse-exited (.setText component "exited"))
+                 (:on-mouse-over (.setText component "over"))))
