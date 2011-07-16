@@ -2,6 +2,45 @@
   (:use [clarity.component] :reload)
   (:use [clojure.test]))
 
+(deftest make-simple
+  (let [button (make :button)]
+    (is (.isAssignableFrom javax.swing.JButton (class button)))
+    (is (.isAssignableFrom clarity.style.Styleable (class button)))
+    (is (.isAssignableFrom clarity.component.Component (class button)))))
+
+(deftest make-simple-awt
+  (let [button (make :awt/button)]
+    (is (.isAssignableFrom java.awt.Button (class button)))
+    (is (.isAssignableFrom clarity.style.Styleable (class button)))
+    (is (.isAssignableFrom clarity.component.Component (class button)))))
+
+(deftest make-with-const-args
+  (let [button (make :button "the button")]
+    (is (= "the button" (.getText button)))))
+
+(deftest make-with-special-setters
+  (let [button (make :button
+                     (:text "the button")
+                     (:border nil))]
+    (is (= "the button" (.getText button)))
+    (is (nil? (.getBorder button)))))
+
+(deftest make-with-normal-setters
+  (let [button (make :button
+                     (.setText "the button")
+                     (.setBorder nil))]
+    (is (= "the button" (.getText button)))
+    (is (nil? (.getBorder button)))))
+
+(deftest make-with-special-setters-and-id
+  (let [button (make :button
+                     (:id :my-button)
+                     (:text "the button")
+                     (:border nil))]
+    (is (= :my-button (id button)))
+    (is (= "the button" (.getText button)))
+    (is (nil? (.getBorder button)))))
+
 (deftest value-of-single-field
   (let [text-field (make :text-field (:text "clarity"))
         check-box (make :check-box (:selected true))]

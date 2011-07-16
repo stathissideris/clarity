@@ -118,21 +118,21 @@
                  (first exp))))
             expressions)))
 
-(defn make-class-name [component flags]
-  (let [awt (contains? flags :awt)
-        name (name component)
-        prefix (if (namespace component)
-                 (if awt
-                   (str "java.awt." (namespace component) ".")
-                   (str "javax.swing." (namespace component) ".J"))
-                 (if awt "java.awt." "javax.swing.J"))]
+(defn make-class-name [component]
+  (let [name (name component)
+        ns (namespace component)
+        prefix (if ns
+                 (if (.startsWith ns "awt")
+                   (str "java." ns ".")
+                   (str "javax.swing." ns ".J"))
+                 "javax.swing.J")]
   (apply str prefix
          (map str/capitalize
               (str/split name #"-")))))
 
 (defmacro make-component [component const-params special-setters]
   (let [clazz (if (keyword? component)
-                (symbol (make-class-name component special-setters))
+                (symbol (make-class-name component))
                 component)]
     ;;TODO: really ref?
     `(let [~'id ~(if (contains? special-setters :id)
