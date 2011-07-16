@@ -7,7 +7,7 @@
   (getId []))
 (defn id [c] (.getId c))
 
-(def special-setters #{:id :awt :category})
+(def special-setters #{:id :category})
 
 (defn split-pane [orientation one two]
   (JSplitPane. (if (= :horizontal orientation)
@@ -76,11 +76,6 @@
   (selection [this] (.getSelectionPaths this))
   (set-selection [this selection] (.setSelectionPaths this selection)))
 
-                                        ;not used
-                                        ;(defn make-method-name [name]
-                                        ;  (let [[first & rest] (str/split name #"-")]
-                                        ;    (symbol (apply str "." first (map str/capitalize rest)))))
-
 (defn special-setter-form? [[k v]]
   (contains? special-setters k))
 
@@ -94,10 +89,8 @@
                                       (filter list? params)))
         setter-forms (remove special-setter-form?
                              (filter list? params))]
-    {:constructor (remove #{:awt} const-params)
-     :special-setter-forms (if (some #{:awt} const-params)
-                             (merge {:awt true} special-setter-forms)
-                             special-setter-forms)
+    {:constructor const-params
+     :special-setter-forms special-setter-forms
      :setter-forms setter-forms}))
 
 (defn make-setter-name [name]
