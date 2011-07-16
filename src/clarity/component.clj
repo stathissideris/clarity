@@ -7,7 +7,7 @@
   (getId []))
 (defn id [c] (.getId c))
 
-(def special-setters #{:id :category})
+(def special-setters #{:init :id :category :categories})
 
 (defn split-pane [orientation one two]
   (JSplitPane. (if (= :horizontal orientation)
@@ -80,7 +80,7 @@
   (contains? special-setters k))
 
 (defn pairs-to-map [p]
-  (into {} (for [[k v] p] [k v])))
+  (into {} (for [[k & v] p] [k (apply vector v)])))
 
 (defn parse-component-params [params]
   (let [const-params (remove list? params)
@@ -96,10 +96,6 @@
 (defn make-setter-name [name]
   (let [pieces (str/split name #"-")]
     (symbol (apply str ".set" (map str/capitalize pieces)))))
-
-(defn do-special-keyword [expression]
-  (cond (= :category (first expression))
-        `(.addCategory ~(second expression))))
 
 (defmacro do-component [component & expressions]
   `(~'doto ~component
@@ -123,19 +119,29 @@
          (map str/capitalize
               (str/split name #"-")))))
 
+(defn process-special-setter [[key [& params]]]
+  (cond (or (= :category key) (= :categories key))
+        `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
+
 (defmacro make-component [component const-params special-setters]
   (let [clazz (if (keyword? component)
                 (symbol (make-class-name component))
-                component)]
+                component)
+        init-params (if (contains? special-setters :init)
+                      (:init special-setters)
+                      const-params)]
     ;;TODO: really ref?
     `(let [~'id ~(if (contains? special-setters :id)
-                   (:id special-setters))
-           ~'cat (ref #{})]
-       (proxy [~clazz Component clarity.style.Styleable] [~@const-params]
-         (~'getId [] ~'id)
-         (~'getCategories [] (deref ~'cat))
-         (~'addCategory [~'s] (alter ~'cat conj ~'s))
-         (~'removeCategory [~'s] (alter ~'cat disj ~'s))))))
+                   (first (:id special-setters)))
+           ~'cat (ref #{})
+           ~'result
+           (proxy [~clazz Component clarity.style.Styleable] [~@init-params]
+             (~'getId [] ~'id)
+             (~'getCategories [] (deref ~'cat))
+             (~'addCategory [~'s] (alter ~'cat conj ~'s))
+             (~'removeCategory [~'s] (alter ~'cat disj ~'s)))]
+       ~@(map process-special-setter special-setters)
+       ~'result)))
 
 (defmacro make
   "Creates a Swing component which also implements the

@@ -41,6 +41,18 @@
     (is (= "the button" (.getText button)))
     (is (nil? (.getBorder button)))))
 
+(deftest make-with-init
+  (let [button (make :button (:init "the button"))]
+    (is (= "the button" (.getText button)))))
+
+(deftest make-with-categories
+  (let [button1 (make :button (:category :a :b))
+        button2 (make :button (:categories :c :d))]
+    (is (= #{:a :b} (.getCategories button1)))
+    (is (= #{:c :d} (.getCategories button2)))))
+
+;;;;
+
 (deftest value-of-single-field
   (let [text-field (make :text-field (:text "clarity"))
         check-box (make :check-box (:selected true))]
