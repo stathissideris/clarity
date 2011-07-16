@@ -157,13 +157,13 @@
            (map #(lookup-event-keyword (first %)) handlers)
            (map rest handlers)))))
 
-;;;example
-;;(let [button (component/make :button "click")]
+;;;; example ;;;;
+;; (let [button (component/make :button "click")]
 ;;  (doto button
 ;;    (.addActionListener
 ;;     (listener :action (:on-action (.setText button "ok"))))
 ;;    (.addMouseListener
-;;     (listener :mouse-input
+;;     (listener :mouse
 ;;               (:on-mouse-over (.setText button "on"))
 ;;               (:on-mouse-out (.setText button "out"))))
 ;;    (show-comp)))
