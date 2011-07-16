@@ -1,6 +1,14 @@
 (ns clarity.utils
   (:import [javax.swing UIManager JFrame]))
 
+(defmacro qw
+  "Constructs a vector of the names (strings) of the passed symbols.
+  This is to save you typing unneccesary quotes. Stolen from Perl.
+
+  Example: (qw \"first name\" surname address)"
+  [& words]
+  `(vector ~@(map name words)))
+
 (defn show-comp [comp]
   (doto (JFrame.)
     (.add comp)
