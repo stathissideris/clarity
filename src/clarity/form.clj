@@ -72,16 +72,14 @@
               (boolean? param) (component/make :check-box
                                                (:selected param)
                                                (:id id))
-              (sequential? param) (let [data (to-array param)]
-                                    (component/make
-                                     :combo-box data (:id id))))] ;;let necessary because of syntax limitation
+              (sequential? param) (component/make
+                                   :combo-box data
+                                   (:init (to-array param)) (:id id)))]
     (if (nil? (.getName field)) (.setName field (make-label-text token)))
     field))
 
 (defn make-label [text]
   (component/make :label text))
-
-(defn log [x] (print x) x)
 
 (defn form [& components]
   (apply mig/miglayout (component/make :panel)
