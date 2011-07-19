@@ -1,6 +1,7 @@
 (ns clarity.component
   (:require [clojure.string :as str]
-            [clarity.event :as event])
+            [clarity.event :as event]
+            [clarity.style :as style])
   (:import [clarity.style.Styleable]
            [javax.swing JSplitPane JScrollPane]))
 
@@ -174,9 +175,7 @@
            ~'result
            (proxy [~clazz Component clarity.style.Styleable] [~@init-params]
              (~'getId [] ~'id)
-             (~'getCategories [] (deref ~'cat))
-             (~'addCategory [~'s] (alter ~'cat conj ~'s))
-             (~'removeCategory [~'s] (alter ~'cat disj ~'s)))]
+             ~@(style/styleable-mixin))]
        ~@(map process-special-setter special-setters)
        ~@(map process-event-form event-forms)
        ~'result)))
