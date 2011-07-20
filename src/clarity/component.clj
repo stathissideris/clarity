@@ -17,6 +17,22 @@
 
 (def special-setters #{:init :id :category :categories})
 
+(defn para [s]
+  (let [font (UIManager/getFont "Label.font")
+        rule (str "body { font-family: "
+                  (.getFamily font)
+                  "; "
+                  "font-size: "
+                  (.getSize font)
+                  "pt; }")
+        pane (doto (JEditorPane. (.getContentType (HTMLEditorKit.)) s)
+               (.setText s)
+               (.setOpaque false)
+               (.setBorder nil)
+               (.setEditable false))]
+    (.addRule (.getStyleSheet (.getDocument pane)) rule)
+    pane))
+
 (defn split-pane [orientation one two]
   (JSplitPane. (if (= :horizontal orientation)
                  JSplitPane/HORIZONTAL_SPLIT
