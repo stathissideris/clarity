@@ -18,12 +18,14 @@
 (definterface Styleable
   (getCategories [])
   (addCategory [s])
-  (removeCategory [s]))
+  (removeCategory [s])
+  (setFont [& args]))
 
 (defn styleable-mixin []
   '((getCategories [] (deref cat))
     (addCategory [s] (alter cat conj s))
-    (removeCategory [s] (alter cat disj s))))
+    (removeCategory [s] (alter cat disj s))
+    (setFont [& args] args))) ;;<- the & is being interpreted as a literal param name :-(
 
 (defn derive-size
   "Given a numerical size and a size-spec, derive a new value. The
@@ -66,6 +68,19 @@
            (derive-size (.getSize f) size-spec)
            size-spec)))
 
+(defn font
+  "Constructs a font out of three optional named parameters, :name
+  :size :style. Style can be :plain :bold :italic or a vector
+  containing :bold and :italic."
+  [&{name :name style :style size :size
+     :or {style (.getStyle default-font)
+          size (.getSize default-font)}}]
+  (let [the-style (interpret-font-style style)
+        the-name (if (keyword? name)
+                   (get font-families name)
+                   name)]
+    (java.awt.Font. the-name the-style size)))
+
 (defn derive-font
   "Given a font, derive a new font, by overwriting its parameters with
   the passed ones. The parameters are the same as the (font) function,
@@ -79,19 +94,6 @@
   (font :name name
         :style style
         :size (derive-font-size f size)))
-
-(defn font
-  "Constructs a font out of three optional named parameters, :name
-  :size :style. Style can be :plain :bold :italic or a vector
-  containing :bold and :italic."
-  [&{name :name style :style size :size
-     :or {style (.getStyle default-font)
-          size (.getSize default-font)}}]
-  (let [the-style (interpret-font-style style)
-        the-name (if (keyword? name)
-                   (get font-families name)
-                   name)]
-    (java.awt.Font. the-name the-style size)))
 
 ;;; color
 

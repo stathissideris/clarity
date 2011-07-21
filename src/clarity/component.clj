@@ -1,9 +1,11 @@
 (ns clarity.component
   (:require [clojure.string :as str]
             [clarity.event :as event]
-            [clarity.style :as style])
+            [clarity.style :as style]
+            [clarity.utils :as utils])
   (:import [clarity.style.Styleable]
-           [javax.swing JSplitPane JScrollPane]))
+           [javax.swing JSplitPane JScrollPane JEditorPane]
+           [javax.swing.text.html HTMLEditorKit]))
 
 (ns clarity.event)
 (declare event-map)
@@ -18,7 +20,7 @@
 (def special-setters #{:init :id :category :categories})
 
 (defn para [s]
-  (let [font (UIManager/getFont "Label.font")
+  (let [font (utils/get-laf-property "Label.font")
         rule (str "body { font-family: "
                   (.getFamily font)
                   "; "
