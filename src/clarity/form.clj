@@ -35,13 +35,16 @@
 (defn tokens [form]
   (loop [f form
          tok ()]
-    (cond (not (seq f)) (apply vector (reverse tok))
-          (special-tag? (first f)) (recur (next f) (conj tok (first f)))
-          (and (> (count f) 2)
+    (cond (not (seq f)) ;;finished, reverse and return
+          (apply vector (reverse tok))
+          (special-tag? (first f)) ;;special, take one, recur with the rest
+          (recur (next f) (conj tok (first f)))
+          (and (> (count f) 2) ;;normal case where there are extra params
                (sequential? (nth f 2))
                (not (special-tag? (nth f 2))))
           (recur (next (nnext f)) (conj tok (apply vector (take 3 f))))
-          :else (recur (nnext f) (conj tok (apply vector (take 2 f)))))))
+          :else ;;normal case, no params,keep 2
+          (recur (nnext f) (conj tok (apply vector (take 2 f)))))))
 
 (defn boolean? [x] (= java.lang.Boolean (class x)))
 
