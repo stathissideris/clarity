@@ -105,12 +105,12 @@
 ;;;;;;;;;;;;
 
 (defn special-setter-form? [form]
-  (if (list? form)
+  (if (sequential? form)
     (let [[k v] form]
       (contains? special-setters k))))
 
 (defn event-form? [form]
-  (if (list? form)
+  (if (sequential? form)
     (let [[k v] form]
       (contains? (into #{} (keys clarity.event/event-map)) k))))
 ;;TODO optimize?
@@ -120,7 +120,7 @@
    (first (get event/event-map k))))
 
 (defn simple-setter-form? [form]
-  (and (list? form)
+  (and (sequential? form)
        (not (special-setter-form? form))
        (not (event-form? form))))
 
@@ -129,7 +129,7 @@
 
 (defn parse-component-params [params]
   {:pre [(keyword? (first params))]}
-  (let [const-params (remove list? params)
+  (let [const-params (remove sequential? params)
         special-setter-forms (pairs-to-map
                               (filter special-setter-form? params))
         event-forms (group-by event-form-listener

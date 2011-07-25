@@ -4,6 +4,7 @@
             [clarity.component :as component]
             clarity.list))
 
+(def special-tag-keys #{:header :group :end-group :text})
 (def field-flags #{:full-width})
 (def header-flags #{})
 (def group-flags #{})
@@ -32,6 +33,23 @@
       (end-group? x)
       (text? x)))
 
+(defn make-header [& args]
+  (let [[s & {level :level}] (remove #{:header} args)]
+    (if level
+      (make :label s [:category (keyword (str "header-" level))])
+      (make :label s))))
+
+;;TODO
+(defn start-group [& args])
+
+;;TODO
+(defn make-text-tag [& args])
+
+(defn handle-special-tag [tag]
+  (cond (header? tag) (apply make-header tag)
+        (group? tag) (apply start-group tag)
+        (text? tag) (apply make-text-tag)))
+
 (defn tokens [form]
   (loop [f form
          tok ()]
@@ -39,7 +57,7 @@
           (apply vector (reverse tok))
           (special-tag? (first f)) ;;special, take one, recur with the rest
           (recur (next f) (conj tok (first f)))
-          (and (> (count f) 2) ;;normal case where there are extra params
+          (and (> (count f) 2) ;;normal case where there are extra params, take 2
                (sequential? (nth f 2))
                (not (special-tag? (nth f 2))))
           (recur (next (nnext f)) (conj tok (apply vector (take 3 f))))
