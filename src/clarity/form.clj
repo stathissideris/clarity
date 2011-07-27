@@ -1,8 +1,10 @@
 (ns clarity.form
   (:require [clojure.string :as str]
             [clojure.contrib.miglayout :as mig]
-            [clarity.component :as component]
-            clarity.list))
+            [clarity.component :as c]
+            [clarity.functions :as fun]
+            clarity.list)
+  (:import [javax.swing BorderFactory]))
 
 (def special-tag-keys #{:header :group :end-group :text})
 (def field-flags #{:full-width})
@@ -36,19 +38,24 @@
 (defn make-header [& args]
   (let [[s & {level :level}] (remove #{:header} args)]
     (if level
-      (make :label s [:category (keyword (str "header-" level))])
-      (make :label s))))
+      (list (make :label s [:category (keyword (str "header-" level))]) :span 2)
+      (list (make :label s [:category :header]) :span 2))))
 
 ;;TODO
-(defn start-group [& args])
+(defn start-group [& args]
+  (let [title (first (remove #{:group} args))]
+    (c/make :panel
+            [:border (BorderFactory/createTitledBorder title)])))
 
 ;;TODO
-(defn make-text-tag [& args])
+(defn make-text [& args]
+  (let [text (first (remove #{:text} args))]
+    (list (c/make :label text) :span 2)))
 
 (defn handle-special-tag [tag]
   (cond (header? tag) (apply make-header tag)
         (group? tag) (apply start-group tag)
-        (text? tag) (apply make-text-tag)))
+        (text? tag) (apply make-text tag)))
 
 (defn tokens [form]
   (loop [f form
@@ -81,33 +88,44 @@
     (str/capitalize (str/replace (name (first token)) "-" " "))))
 
 (defn make-field [token]
-  (let [[id param] token
-        field
-        (cond (keyword? param)
-              (cond (= :number param) (component/make :text-field (:id id))
-                    (= :string param) (component/make :text-field (:id id)))
-              (string? param) (component/make :text-field
-                                              (:text param) (:id id))
-              (number? param) (component/make :text-field
-                                              (:text (str param)) (:id id))
-              (boolean? param) (component/make :check-box
-                                               (:selected param)
-                                               (:id id))
-              (sequential? param) (component/make
-                                   :combo-box data
-                                   (:init (to-array param)) (:id id)))]
-    (if (nil? (.getName field)) (.setName field (make-label-text token)))
-    field))
+    (let [[id param] token
+          field
+          (cond (keyword? param)
+                (cond (= :number param) (c/make :text-field (:id id))
+                      (= :string param) (c/make :text-field (:id id)))
+                (string? param) (c/make :text-field
+                                        (:text param) (:id id))
+                (number? param) (c/make :text-field
+                                        (:text (str param)) (:id id))
+                (boolean? param) (c/make :check-box
+                                         (:selected param)
+                                         (:id id))
+                (sequential? param) (c/make
+                                     :combo-box data
+                                     (:init (to-array param)) (:id id)))]
+      (if (nil? (.getName field)) (.setName field (make-label-text token)))
+      field))
 
 (defn make-label [text]
-  (component/make :label text))
+  (c/make :label text))
 
-(defn form [& components]
-  (apply mig/miglayout (component/make :panel)
+(defn handle-form-token [token]
+  (if (special-tag? token)
+    (handle-special-tag token)
+    (list (make-label (make-label-text token))
+          (make-field token)
+          :sg))) ;;to achieve equal heights
+
+(defn make-form-panel [mig-params]
+  (apply mig/miglayout (c/make :panel)
          :layout "wrap 2"
          :column "[left][grow,fill]"
-         (reduce concat
-                 (map #(list (make-label (make-label-text %))
-                             (make-field %)
-                             :sg) ;;to achieve equal heights
-                      (tokens components)))))
+         mig-params))
+
+(defn params-to-mig-params [params]
+  (reduce concat
+          (map handle-form-token
+               (tokens params))))
+
+(defn form [& components]
+  (make-form-panel (params-to-mig-params components)))

@@ -1,7 +1,10 @@
 (ns clarity.functions)
 
-(defn normalize-mixed-params [m flags]
-   (let [values (map
+(defn normalize-mixed-params [flags m]
+;;  {:pre [(set? flags)
+;;         (sequential? m)]}
+  (prn m)
+  (let [values (map
                   #(if (keyword? %) (symbol (name %)) %)
                   (remove flags m))
          true-flags (apply concat
@@ -12,5 +15,5 @@
                              [(symbol (name f)) false]))]
          (into [] (concat values true-flags false-flags))))
 
-(defmacro let-flags [m flags & body]
-  `(let ~(normalize-mixed-params m flags) ~@body))
+(defmacro let-flags [flags m & body]
+  `(let ~(normalize-mixed-params flags m) ~@body))
