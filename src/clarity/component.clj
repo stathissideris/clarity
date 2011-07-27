@@ -21,29 +21,6 @@
 
 (def special-setters #{:init :id :category :categories})
 
-(defn para [s & flags]
-  (let [font (utils/get-laf-property "Label.font")
-        rich? (some #{:rich} flags)
-        text (if rich?
-               (str2/replace
-                (.markdown (MarkdownProcessor.) s)
-                "\n" "<br>")
-               s)
-        rule (str "body { font-family: "
-                  (.getFamily font)
-                  "; "
-                  "font-size: "
-                  (.getSize font)
-                  "pt; }")
-        pane (doto (make :editor-pane
-                         [:init (.getContentType (HTMLEditorKit.)) text])
-               (.setText text)
-               (.setOpaque false)
-               (.setBorder nil)
-               (.setEditable false))]
-    (.addRule (.getStyleSheet (.getDocument pane)) rule)
-    pane))
-
 (defn split-pane [orientation one two]
   (JSplitPane. (if (= :horizontal orientation)
                  JSplitPane/HORIZONTAL_SPLIT
@@ -227,6 +204,33 @@
                         ~special-setter-forms
                         ~event-forms)
         ~@setter-forms))))
+
+(defn para
+  "Creates a paragraph of text that wraps according to the available
+  width. It is also possible to copy the text and the input can be
+  HTML. If the :rich flag is passed, the text is processed as markdown."
+  [s & flags]
+  (let [font (utils/get-laf-property "Label.font")
+        rich? (some #{:rich} flags)
+        text (if rich?
+               (str2/replace
+                (.markdown (MarkdownProcessor.) s)
+                "\n" "<br>")
+               s)
+        rule (str "body { font-family: "
+                  (.getFamily font)
+                  "; "
+                  "font-size: "
+                  (.getSize font)
+                  "pt; }")
+        pane (doto (make :editor-pane
+                         [:init (.getContentType (HTMLEditorKit.)) text])
+               (.setText text)
+               (.setOpaque false)
+               (.setBorder nil)
+               (.setEditable false))]
+    (.addRule (.getStyleSheet (.getDocument pane)) rule)
+    pane))
 
 ;;example with events
 #_(show-comp (make :button "testing events"
