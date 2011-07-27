@@ -1,11 +1,13 @@
 (ns clarity.component
   (:require [clojure.string :as str]
+            [clojure.contrib.str-utils2 :as str2]
             [clarity.event :as event]
             [clarity.style :as style]
             [clarity.utils :as utils])
   (:import [clarity.style.Styleable]
            [javax.swing JSplitPane JScrollPane JEditorPane]
-           [javax.swing.text.html HTMLEditorKit]))
+           [javax.swing.text.html HTMLEditorKit]
+           [com.petebevin.markdown MarkdownProcessor]))
 
 (ns clarity.event)
 (declare event-map)
@@ -19,16 +21,23 @@
 
 (def special-setters #{:init :id :category :categories})
 
-(defn para [s]
+(defn para [s & flags]
   (let [font (utils/get-laf-property "Label.font")
+        rich? (some #{:rich} flags)
+        text (if rich?
+               (str2/replace
+                (.markdown (MarkdownProcessor.) s)
+                "\n" "<br>")
+               s)
         rule (str "body { font-family: "
                   (.getFamily font)
                   "; "
                   "font-size: "
                   (.getSize font)
                   "pt; }")
-        pane (doto (JEditorPane. (.getContentType (HTMLEditorKit.)) s)
-               (.setText s)
+        pane (doto (make :editor-pane
+                         [:init (.getContentType (HTMLEditorKit.)) text])
+               (.setText text)
                (.setOpaque false)
                (.setBorder nil)
                (.setEditable false))]

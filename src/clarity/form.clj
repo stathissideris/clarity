@@ -24,10 +24,10 @@
   {:flags (apply hash-set (filter flags args))
    :args (apply hash-map (remove flags args))})
 
-(defn header? [x] (and (sequential? x) (some #(= :header %) x)))
-(defn group? [x] (and (sequential? x) (some #(= :group %) x)))
-(defn end-group? [x] (and (sequential? x) (some #(= :end-group %) x)))
-(defn text? [x] (and (sequential? x) (some #(= :text %) x)))
+(defn header? [x] (and (sequential? x) (= (first x) :header)))
+(defn group? [x] (and (sequential? x) (= (first x) :group)))
+(defn end-group? [x] (and (sequential? x) (= (first x) :end-group)))
+(defn text? [x] (and (sequential? x) (= (first x) :text)))
 
 (defn special-tag? [x]
   (or (header? x)
@@ -35,22 +35,20 @@
       (end-group? x)
       (text? x)))
 
-(defn make-header [& args]
-  (let [[s & {level :level}] (remove #{:header} args)]
-    (if level
-      (list (make :label s [:category (keyword (str "header-" level))]) :span 2)
-      (list (make :label s [:category :header]) :span 2))))
+(defn make-header [_ s & {level :level}]
+  (if level
+    (list (make :label s [:category (keyword (str "header-" level))]) [:span 2])
+    (list (make :label s [:category :header]) [:span 2])))
 
 ;;TODO
-(defn start-group [& args]
-  (let [title (first (remove #{:group} args))]
-    (c/make :panel
-            [:border (BorderFactory/createTitledBorder title)])))
+(defn start-group [[_ title] args]
+  (c/make :panel
+          [:border (BorderFactory/createTitledBorder title)]))
 
-;;TODO
-(defn make-text [& args]
-  (let [text (first (remove #{:text} args))]
-    (list (c/make :label text) :span 2)))
+(defn make-text [_ text & flags]
+  (let [para (apply c/para text flags)]
+    (dosync (.addCategory para :form-text))
+    (list para [:span 2])))
 
 (defn handle-special-tag [tag]
   (cond (header? tag) (apply make-header tag)
