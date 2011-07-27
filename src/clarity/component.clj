@@ -206,9 +206,10 @@
         ~@setter-forms))))
 
 (defn para
-  "Creates a paragraph of text that wraps according to the available
-  width. It is also possible to copy the text and the input can be
-  HTML. If the :rich flag is passed, the text is processed as markdown."
+  "Creates a paragraph of text (using JEditorPane) that wraps
+  according to the available width. It is also possible to copy the
+  text and the input can be HTML. If the :rich flag is passed, the
+  text is processed as markdown."
   [s & flags]
   (let [font (utils/get-laf-property "Label.font")
         rich? (some #{:rich} flags)
