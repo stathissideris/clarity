@@ -28,3 +28,15 @@
       (.add content BorderLayout/CENTER)
       (.add (make-button-panel dialog buttons) BorderLayout/SOUTH)
       (.pack))))
+
+(defn show-dialog [content buttons]
+  (.setVisible (dialog content buttons) true))
+
+;;example
+#_(show-dialog
+   (clarity.form/form [:header "The form"]
+                      [:text "Please fill in the **entire** form." :rich]
+                      :first-name ""
+                      :surname ""
+                      :gender ["male" "female"])
+   ["OK" "Cancel"])
