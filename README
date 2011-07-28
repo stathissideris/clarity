@@ -1,17 +1,10 @@
-# clarity
+Example of the form facilities:
 
-FIXME: write description
-
-## Usage
-
-FIXME: write
-
-## Installation
-
-FIXME: write
-
-## License
-
-Copyright (C) 2010 FIXME
-
-Distributed under the Eclipse Public License, the same as Clojure.
+````clojure
+    (dialog
+     (form [:header "The form"]
+           [:text "Please fill in the **entire** form." :rich]
+           :first-name ""
+           :surname ""
+           :gender ["male" "female"])
+     ["OK" "Cancel"])
