@@ -1,5 +1,12 @@
 (ns clarity.debug
-  (:use [clojure.contrib.str-utils :only (re-sub)]))
+  (:use [clojure.contrib.str-utils :only (re-sub)])
+  (:import [java.awt Container]))
+
+(defn dump [component]
+  (let [classname (.getName (.getClass component))]
+    (if (instance? java.awt.Container component)
+      [classname (into [] (map dump (.getComponents component)))]
+      classname)))
 
 (defn- unmangle
   "Given the name of a class that implements a Clojure function,
