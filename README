@@ -1,6 +1,5 @@
 Example of the form facilities:
 
-````clojure
     (dialog
      (form [:header "The form"]
            [:text "Please fill in the **entire** form." :rich]
