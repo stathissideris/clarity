@@ -37,8 +37,8 @@
 
 (defn make-header [_ s & {level :level}]
   (if level
-    (list (make :label s [:category (keyword (str "header-" level))]) [:span 2])
-    (list (make :label s [:category :header]) [:span 2])))
+    (list (c/make :label s [:category (keyword (str "header-" level))]) [:span 2])
+    (list (c/make :label s [:category :header]) [:span 2])))
 
 ;;TODO
 (defn start-group [[_ title] args]
