@@ -89,23 +89,27 @@
     (let [[id param] token
           field
           (cond (keyword? param)
-                (cond (= :number param) (c/make :text-field (:id id))
-                      (= :string param) (c/make :text-field (:id id)))
+                (cond (= :number param) (c/make :text-field [:id id])
+                      (= :string param) (c/make :text-field [:id id]))
                 (string? param) (c/make :text-field
-                                        (:text param) (:id id))
+                                        [:text param]
+                                        [:id id])
                 (number? param) (c/make :text-field
-                                        (:text (str param)) (:id id))
+                                        [:text (str param)]
+                                        [:id id])
                 (boolean? param) (c/make :check-box
-                                         (:selected param)
-                                         (:id id))
+                                         [:selected param]
+                                         [:id id])
                 (sequential? param) (c/make
                                      :combo-box data
-                                     (:init (to-array param)) (:id id)))]
+                                     [:init (to-array param)]
+                                     [:id id]))]
       (if (nil? (.getName field)) (.setName field (make-label-text token)))
+      (dosync (c/add-category field :form-field))
       field))
 
 (defn make-label [text]
-  (c/make :label text))
+  (c/make :label text (:category :form-label)))
 
 (defn handle-form-token [token]
   (if (special-tag? token)
@@ -115,7 +119,7 @@
           :sg))) ;;to achieve equal heights
 
 (defn make-form-panel [mig-params]
-  (apply mig/miglayout (c/make :panel)
+  (apply mig/miglayout (c/make :panel (:category :form))
          :layout "wrap 2"
          :column "[left][grow,fill]"
          mig-params))

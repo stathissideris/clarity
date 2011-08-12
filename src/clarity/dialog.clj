@@ -7,7 +7,7 @@
                button
                button)] ;;TODO handle keywords
     (c/make :button button
-            [:category :form-button]
+            [:category :dialog-button]
             [:on-click (.dispose dialog)])))
 
 (defn make-button-panel [dialog buttons]
@@ -22,7 +22,7 @@
              (map? buttons))]}
   (if (instance? clarity.style.Styleable content)
     (dosync (.addCategory content :dialog-content-panel)))
-  (let [dialog (c/make :dialog)]
+  (let [dialog (c/make :dialog [:category :dialog])]
     (doto dialog
       (.setLayout (BorderLayout.))
       (.add content BorderLayout/CENTER)
