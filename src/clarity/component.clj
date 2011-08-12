@@ -17,7 +17,14 @@
 
 (definterface Component
   (getId []))
-(defn id [c] (.getId c))
+
+;;TODO does not work!
+(defn component? [x] (instance? clarity.component.Component x))
+
+(defn id [c]
+  (try
+    (.getId c)
+    (catch Exception e nil)))
 
 (def special-setters #{:init :id :category :categories})
 
@@ -33,6 +40,10 @@
 (defn categories [comp] (.getCategories comp))
 (defn add-category [comp s] (.addCategory comp s))
 (defn remove-category [comp s] (.removeCategory comp s))
+(defn has-category [comp category]
+  (try
+    (contains? (categories comp) category)
+    (catch Exception e false)))
 
 (defprotocol HasValue
   (value [this])

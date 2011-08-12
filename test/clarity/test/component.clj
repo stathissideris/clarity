@@ -57,6 +57,18 @@
                      (:on-mouse-over (.setText this "over")))])
   (is (= 1 1)))
 
+(deftest has-category-true
+  (is (= true
+         (has-category (make :button [:categories :a :b]) :b))))
+
+(deftest has-category-false
+  (is (= false
+         (has-category (make :button [:categories :a :b]) :c))))
+
+(deftest has-category-forgiving
+  (is (= false
+         (has-category 1 :b))))
+
 ;;;;
 
 (deftest value-of-single-field
@@ -90,3 +102,15 @@
     (is (= {:panel1 {:nested "nested"}
             :field1 "clojure"
             :field2 "rocks"} (value panel)))))
+
+(deftest is-component-true
+  (is (= true (component? (make :button)))))
+
+(deftest id-component-false
+  (is (= false (component? 1))))
+
+(deftest id-getter
+  (is (= :the-test (id (make :button [:id :the-test])))))
+
+(deftest id-getter-nil
+  (is (= nil (id 1))))
