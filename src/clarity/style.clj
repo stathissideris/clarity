@@ -27,6 +27,11 @@
     (removeCategory [s] (alter cat disj s))
     (setFont [& args] args))) ;;<- the & is being interpreted as a literal param name :-(
 
+;;TODO does not work!
+(defn styleable?
+  [x]
+  (instance? Styleable x))
+
 (defn derive-size
   "Given a numerical size and a size-spec, derive a new value. The
   size-spec can be a number, in which case the size-spec is
