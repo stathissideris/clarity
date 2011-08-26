@@ -25,8 +25,11 @@
   `((getCategories [] (deref ~'cat))
     (addCategory [~'s] (alter ~'cat ~'conj ~'s))
     (removeCategory [~'s] (alter ~'cat ~'disj ~'s))
-    (setFont [& ~'args] (.setFont ~'this (apply font ~'args)))))
-;;<- the & is being interpreted as a literal param name
+    (setFont [& ~'args] (if (isa? (first ~'args) ~'java.awt.Font)
+                          (proxy-super ~'setFont (first ~'args))
+                          (proxy-super ~'setFont (apply font ~'args))))))
+
+;;this now works: (show-comp (make :button "Testing" [:font :size "x6"]))
 
 ;;TODO does not work!
 (defn styleable?
@@ -43,7 +46,7 @@
   {:pre [(number? original-size)
          (or (number? size-spec) (string? size-spec))]}
   (if (number? size-spec) size-spec
-      (let [[_ sign amount-str percent] (re-find #"([+-])?0*(\d+)(%)?" size-spec)
+      (let [[_ sign amount-str percent] (re-find #"([+-x])?0*(\d+)(%)?" size-spec)
             amount (read-string amount-str)]
         (if percent
           (cond (nil? sign)
@@ -57,7 +60,9 @@
                 (= "+" sign)
                 (+ original-size amount)
                 (= "-" sign)
-                (- original-size amount))))))
+                (- original-size amount)
+                (= "x" sign)
+                (* original-size amount))))))
 
 ;;; font
 
@@ -84,7 +89,9 @@
   (let [the-style (interpret-font-style style)
         the-name (if (keyword? name)
                    (get font-families name)
-                   name)]
+                   name)
+        size (if (string? size) (derive-font-size default-font size)
+                 size)]
     (java.awt.Font. the-name the-style size)))
 
 (defn derive-font
