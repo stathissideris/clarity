@@ -25,7 +25,7 @@
   `((getCategories [] (deref ~'cat))
     (addCategory [~'s] (alter ~'cat ~'conj ~'s))
     (removeCategory [~'s] (alter ~'cat ~'disj ~'s))
-    (setFont [& ~'args] (if (isa? (first ~'args) ~'java.awt.Font)
+    (setFont [& ~'args] (if (instance? ~'java.awt.Font (first ~'args))
                           (proxy-super ~'setFont (first ~'args))
                           (proxy-super ~'setFont (apply font ~'args))))))
 
