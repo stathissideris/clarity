@@ -46,7 +46,7 @@
   {:pre [(number? original-size)
          (or (number? size-spec) (string? size-spec))]}
   (if (number? size-spec) size-spec
-      (let [[_ sign amount-str percent] (re-find #"([+-x])?0*(\d+)(%)?" size-spec)
+      (let [[_ sign amount-str percent] (re-find #"([x+-])?0*(\d+)(%)?" size-spec)
             amount (read-string amount-str)]
         (if percent
           (cond (nil? sign)
@@ -74,7 +74,7 @@
         :else style))
 
 (defn derive-font-size [f size-spec]
-  {:pre [(isa? (class f) java.awt.Font)]}
+  {:pre [(instance? java.awt.Font f)]}
   (max 1 (if (string? size-spec)
            (derive-size (.getSize f) size-spec)
            size-spec)))
