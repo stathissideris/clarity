@@ -41,12 +41,13 @@
   size-spec can be a number, in which case the size-spec is
   returned. If the size-spec is a string it can be of the format
   \"+10%\" or \"10%\" or \"-6\" in which case the appropriate
-  conversion is applied to the original value."
+  conversion is applied to the original value. Limitation: do not use
+  leading zeroes in the size-spec, unless you it's a decimal (0.1)."
   [original-size size-spec]
   {:pre [(number? original-size)
          (or (number? size-spec) (string? size-spec))]}
   (if (number? size-spec) size-spec
-      (let [[_ sign amount-str percent] (re-find #"([x+-])?0*(\d+)(%)?" size-spec)
+      (let [[_ sign amount-str percent] (re-find #"([x+-])?([\d\.]+)(%)?" size-spec)
             amount (read-string amount-str)]
         (if percent
           (cond (nil? sign)
