@@ -1,6 +1,5 @@
 (ns clarity.event
-  (:require [clarity.component :as component]
-            [clarity.utils :as utils]
+  (:require [clarity.utils :as utils]
             clojure.set
             [clojure.contrib.str-utils2 :as str2]))
 

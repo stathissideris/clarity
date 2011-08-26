@@ -34,6 +34,8 @@
   [root id]
   (first (filter #(= id (c/id %)) (comp-seq root))))
 
+(def $ find-by-id)
+
 (defn child-with-id
   "Returns a direct descendant of parent with a matching id (if any)."
   [parent id]

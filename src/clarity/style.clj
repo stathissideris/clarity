@@ -22,10 +22,11 @@
   (setFont [& args]))
 
 (defn styleable-mixin []
-  '((getCategories [] (deref cat))
-    (addCategory [s] (alter cat conj s))
-    (removeCategory [s] (alter cat disj s))
-    (setFont [& args] args))) ;;<- the & is being interpreted as a literal param name :-(
+  `((getCategories [] (deref ~'cat))
+    (addCategory [~'s] (alter ~'cat ~'conj ~'s))
+    (removeCategory [~'s] (alter ~'cat ~'disj ~'s))
+    (setFont [& ~'args] (.setFont ~'this (apply font ~'args)))))
+;;<- the & is being interpreted as a literal param name
 
 ;;TODO does not work!
 (defn styleable?
@@ -124,3 +125,8 @@
             (min 255 (+ (.getAlpha c1) (.getAlpha c2)))))
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
+
+;;; applying styles
+
+;;(defn apply-style [component style-forms]
+;;  (do-component component style-forms))

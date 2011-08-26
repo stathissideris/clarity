@@ -9,12 +9,6 @@
            [javax.swing.text.html HTMLEditorKit]
            [com.petebevin.markdown MarkdownProcessor]))
 
-(ns clarity.event)
-(declare event-map)
-(declare make-listener-keyword)
-(declare listener-keyword-to-adder)
-(ns clarity.component)
-
 (definterface Component
   (getId []))
 
