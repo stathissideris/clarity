@@ -28,9 +28,6 @@
                  JSplitPane/VERTICAL_SPLIT)
                one two))
 
-(defn scroll-pane [comp]
-  (JScrollPane. comp))
-
 (defn categories [comp] (.getCategories comp))
 (defn add-category [comp s] (.addCategory comp s))
 (defn remove-category [comp s] (.removeCategory comp s))
@@ -118,13 +115,15 @@
 (defn pairs-to-map [p]
   (into {} (for [[k & v] p] [k (apply vector v)])))
 
-(defn parse-component-params [params]
-  {:pre [(keyword? (first params))]}
+(defn parse-component-params
+  "Expects a form like (class-type const-params* [setters]*) and
+  splits them into const-params, special-setter forms (:id etc) event-
+  forms and setter-forms."
+  [params]
   (let [const-params (remove sequential? params)
         special-setter-forms (pairs-to-map
                               (filter special-setter-form? params))
-        event-forms (group-by event-form-listener
-                              (filter event-form? params))
+        event-forms (filter event-form? params)
         setter-forms (filter simple-setter-form? params)]
     {:constructor const-params
      :special-setter-forms special-setter-forms
@@ -135,15 +134,27 @@
   (let [pieces (str/split name #"-")]
     (symbol (apply str ".set" (map str/capitalize pieces)))))
 
+(defn process-event-form
+  "Expects a form like (:listener-name [(:on-event (code))+]) and
+  produces a bit of code that is suitable to be used in a doto macro
+  to add the listener to the component."
+  [[key handler-forms]]
+  `(~(event/listener-keyword-to-adder key)
+    (event/listener ~key ~@handler-forms)))
+
 (defmacro do-component [component & expressions]
-  `(~'doto ~component
-     ~@(map (fn [exp]
-              (conj
-               (drop 1 exp)
-               (if (keyword? (first exp))
-                 (make-setter-name (name (first exp)))
-                 (first exp))))
-            expressions)))
+  (let [{:keys [event-forms
+                setter-forms]} (parse-component-params (conj expressions :dummy))
+                event-forms (group-by event-form-listener event-forms)]
+    `(let [~'this ~component]
+       (~'doto ~'this
+         ~@(map (fn [exp]
+                  (conj
+                   (drop 1 exp)
+                   (if (keyword? (first exp))
+                     (make-setter-name (name (first exp)))
+                     (first exp)))) setter-forms)
+         ~@(map process-event-form event-forms)))))
 
 (defn make-class-name [component]
   (let [name (name component)
@@ -161,16 +172,11 @@
   (cond (or (= :category key) (= :categories key))
         `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
 
-(defn process-event-form [[key body]]
-  `(let [~'this ~'result]
-     (~(event/listener-keyword-to-adder key)
-      ~'result (event/listener ~key ~@body))))
-
-(defmacro make-component [component const-params
-                          special-setters event-forms]
+(defmacro make-component [component
+                          const-params
+                          special-setters]
   {:pre [(sequential? const-params)
-         (map? special-setters)
-         (map? event-forms)]}
+         (map? special-setters)]}
   (let [clazz (if (keyword? component)
                 (symbol (make-class-name component))
                 component)
@@ -186,7 +192,6 @@
              (~'getId [] ~'id)
              ~@(style/styleable-mixin))]
        ~@(map process-special-setter special-setters)
-       ~@(map process-event-form event-forms)
        ~'result)))
 
 (defmacro make
@@ -198,17 +203,16 @@
                 special-setter-forms
                 event-forms
                 setter-forms]} (parse-component-params args)]
-    (if (empty? setter-forms)
+    (if (and (empty? setter-forms) (empty? event-forms))
       `(make-component ~(first constructor)
                        ~(rest constructor)
-                       ~special-setter-forms
-                       ~event-forms)
+                       ~special-setter-forms)
       `(do-component
         (make-component ~(first constructor)
                         ~(rest constructor)
-                        ~special-setter-forms
-                        ~event-forms)
-        ~@setter-forms))))
+                        ~special-setter-forms)
+        ~@(concat setter-forms
+                  event-forms)))))
 
 (defn para
   "Creates a paragraph of text (using JEditorPane) that wraps
@@ -237,6 +241,9 @@
                (.setEditable false))]
     (.addRule (.getStyleSheet (.getDocument pane)) rule)
     pane))
+
+(defn scroll-pane [comp]
+  (make :scroll-pane comp))
 
 ;;example with events
 #_(show-comp (make :button "testing events"

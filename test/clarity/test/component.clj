@@ -4,13 +4,13 @@
 
 (deftest make-simple
   (let [button (make :button)]
-    (is (.isAssignableFrom javax.swing.JButton (class button)))
+    (is (instance? javax.swing.JButton button))
     (is (.isAssignableFrom clarity.style.Styleable (class button)))
     (is (.isAssignableFrom clarity.component.Component (class button)))))
 
 (deftest make-simple-awt
   (let [button (make :awt/button)]
-    (is (.isAssignableFrom java.awt.Button (class button)))
+    (is (instance? java.awt.Button button))
     (is (.isAssignableFrom clarity.style.Styleable (class button)))
     (is (.isAssignableFrom clarity.component.Component (class button)))))
 
@@ -18,21 +18,21 @@
   (let [button (make :button "the button")]
     (is (= "the button" (.getText button)))))
 
-(deftest make-with-special-setters
+(deftest make-with-keyword-do
   (let [button (make :button
                      (:text "the button")
                      (:border nil))]
     (is (= "the button" (.getText button)))
     (is (nil? (.getBorder button)))))
 
-(deftest make-with-normal-setters
+(deftest make-with-normal-do
   (let [button (make :button
                      (.setText "the button")
                      (.setBorder nil))]
     (is (= "the button" (.getText button)))
     (is (nil? (.getBorder button)))))
 
-(deftest make-with-special-setters-and-id
+(deftest make-with-keyword-do-and-id
   (let [button (make :button
                      (:id :my-button)
                      (:text "the button")
@@ -51,11 +51,47 @@
     (is (= #{:a :b} (.getCategories button1)))
     (is (= #{:c :d} (.getCategories button2)))))
 
-(deftest make-with-events
-  (let [button (make :button "testing events"
-                     (:on-mouse-exited (.setText this "exited"))
-                     (:on-mouse-over (.setText this "over")))])
-  (is (= 1 1)))
+(deftest make-with-events-one-listener
+  (let [label (make :label "testing events"
+                    (:on-mouse-exited (.setText this "exited"))
+                    (:on-mouse-over (.setText this "over")))]
+    (is (= 1 (count (.getMouseListeners label))))))
+
+(deftest make-with-events-two-listeners
+  (let [label (make :label "testing events"
+                    (:on-component-resized (.setText this "resized"))
+                    (:on-mouse-exited (.setText this "exited"))
+                    (:on-mouse-over (.setText this "over")))]
+    (is (= 1 (count (.getMouseListeners label))))
+    (is (= 1 (count (.getComponentListeners label))))))
+
+(deftest do-component-simple
+  (let [button (make :button)]
+    (do-component button
+                  (.setText "lala"))
+    (is (= "lala" (.getText button)))))
+
+(deftest do-component-keyword
+  (let [button (make :button)]
+    (do-component button
+                  [:text "lala"])
+    (is (= "lala" (.getText button)))))
+
+(deftest do-component-with-events-one-listener
+  (let [label (make :label)]
+    (do-component label
+                  (:on-mouse-exited (.setText this "exited"))
+                  (:on-mouse-over (.setText this "over")))
+    (is (= 1 (count (.getMouseListeners label))))))
+
+(deftest do-component-with-events-two-listeners
+  (let [label (make :label)]
+    (do-component label
+                  (:on-component-resized (.setText this "resized"))
+                  (:on-mouse-exited (.setText this "exited"))
+                  (:on-mouse-over (.setText this "over")))
+    (is (= 1 (count (.getMouseListeners label))))
+    (is (= 1 (count (.getComponentListeners label))))))
 
 (deftest has-category-true
   (is (= true
