@@ -15,7 +15,6 @@
   particular element being returned. This works OK for short lists,
   but if the list will likely be large (or change very often), you
   should consider writing a customised model."
-  
   ([data]
      (let [watch-key (gensym "list-watch-")
            model (proxy [javax.swing.AbstractListModel] []
