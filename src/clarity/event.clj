@@ -135,11 +135,6 @@
   (symbol
    (second (get event-map key))))
 
-(reify java.awt.event.KeyListener
-  (keyPressed [this event] (print "pressed"))
-  (keyReleased [this event] (print "released"))
-  (keyTyped [this event] (print "typed")))
-
 (defmacro listener
   "(listener :key
      (:on-key-typed (print \"typed\"))
@@ -162,6 +157,25 @@
        ~@(map (fn [method body] `(~method [~'listener ~'event] ~@body))
            (map #(lookup-event-keyword (first %)) handlers)
            (map rest handlers)))))
+
+(defmacro add-window-shortcut
+  "Adds a keyboard shortcut to the component. This is detected when
+  the window that contains the component is in focus. The expressions
+  in body are executed when the shortcut is pressed. Binds 'this to
+  the passed component."
+  [component key-event key-modifiers & body]
+  (let [action (name (gensym "ACTION_"))]
+    `(let [~'this ~component]
+       (.put (.getInputMap
+              ~'this
+              javax.swing.JComponent/WHEN_IN_FOCUSED_WINDOW)
+             (javax.swing.KeyStroke/getKeyStroke ~key-event ~key-modifiers)
+             ~action)
+       (.put (.getActionMap
+              ~'this)
+              ~action
+              (proxy [javax.swing.AbstractAction] []
+                (~'actionPerformed [~'event] ~@body))))))
 
 ;;;; example ;;;;
 ;; (let [button (component/make :button "click")]
