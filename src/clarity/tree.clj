@@ -12,15 +12,24 @@
     (if paths
       (map #(.getLastPathComponent %) paths))))
 
+(defn- coerce-to-array [type content]
+  (if (sequential? content)
+    (into-array type content)
+    (into-array type [content])))
+
 (defn event
-  ([^Tree tree path]
-     (TreeModelEvent. source path))
-  ([^JTree tree path indices objects]
-     (TreeModelEvent. source path indices objects)))
+  ([tree path]
+     (let [path (coerce-to-array Object path)]
+       (TreeModelEvent. tree path)))
+  ([tree path indices objects]
+     (let [path (coerce-to-array Object path)
+           indices (coerce-to-array Integer/TYPE indices)
+           objects (coerce-to-array Object objects)]
+       (TreeModelEvent. tree path indices objects))))
 
 (defn fire-event
   "The type can be :change :insert :remove :structure."
-  ([listeners event type]
+  ([listeners type event]
      (case type
            :change (doall (map #(.treeNodesChanged % event) listeners))
            :insert (doall (map #(.treeNodesInserted % event) listeners))
