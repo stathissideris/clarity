@@ -15,6 +15,10 @@
     (.pack)
     (.setVisible true)))
 
+(defn dispose-all-frames []
+  (doseq [frame (java.awt.Frame/getFrames)]
+    (.dispose frame)))
+
 (defn set-system-laf []
   (javax.swing.UIManager/setLookAndFeel
    (javax.swing.UIManager/getCrossPlatformLookAndFeelClassName)))

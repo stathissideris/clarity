@@ -34,7 +34,14 @@
   [root id]
   (first (filter #(= id (c/id %)) (comp-seq root))))
 
-(def $ find-by-id)
+(defn $
+  "With a single parameter, it applies (find-by-id) to the last opened
+  java.awt.Frame. With 2 parameters it's just a synonym
+  of (find-by-id)."
+  ([id]
+     (let [frames (java.awt.Frame/getFrames)]
+       ($ (last frames) id)))
+  ([root id] (find-by-id root id)))
 
 (defn child-with-id
   "Returns a direct descendant of parent with a matching id (if any)."
