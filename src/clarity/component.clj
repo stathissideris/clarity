@@ -5,7 +5,7 @@
             [clarity.style :as style]
             [clarity.utils :as utils])
   (:import [clarity.style.Styleable]
-           [javax.swing JSplitPane JScrollPane JEditorPane]
+           [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
            [javax.swing.text.html HTMLEditorKit]
            [com.petebevin.markdown MarkdownProcessor]))
 
@@ -244,6 +244,20 @@
 
 (defn scroll-pane [comp]
   (make :scroll-pane comp))
+
+(defn choose-file
+  "Opens a file selection dialog and returns the absolute path of the
+  selected file. The initial path can be passed, and if the second
+  parameter is :save, the dialog is opened in save mode."
+  ([] (choose-file nil))
+  ([path] (choose-file path :load))
+  ([path flag]
+     (let [chooser (JFileChooser. path)
+           option (if (= :save flag)
+                    (.showSaveDialog chooser nil)
+                    (.showOpenDialog chooser nil))]
+       (if (= JFileChooser/APPROVE_OPTION option)
+         (.getAbsolutePath (.getSelectedFile chooser))))))
 
 ;;example with events
 #_(show-comp (make :button "testing events"
