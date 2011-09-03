@@ -18,14 +18,14 @@
     (into-array type [content])))
 
 (defn event
-  ([tree path]
+  ([model path]
      (let [path (coerce-to-array Object path)]
-       (TreeModelEvent. tree path)))
+       (TreeModelEvent. model path)))
   ([tree path indices objects]
      (let [path (coerce-to-array Object path)
            indices (coerce-to-array Integer/TYPE indices)
            objects (coerce-to-array Object objects)]
-       (TreeModelEvent. tree path indices objects))))
+       (TreeModelEvent. model path indices objects))))
 
 (defn fire-event
   "The type can be :change :insert :remove :structure."
