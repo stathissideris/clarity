@@ -1,0 +1,8 @@
+digraph G {
+	component -> event
+	component -> style
+	form -> component
+	form -> functions
+	dialog -> component
+	list
+}
