@@ -1,11 +1,18 @@
 (ns clarity.event
-  (:require [clarity.utils :as utils]
-            clojure.set
+  (:require clojure.set
             [clojure.contrib.str-utils2 :as str2]))
+
+(defmacro qw
+  "Constructs a vector of the names (strings) of the passed symbols.
+  This is to save you typing unneccesary quotes. Stolen from Perl.
+
+  Example: (qw \"first name\" surname address)"
+  [& words]
+  `(vector ~@(map name words)))
 
 (def awt-listeners
   (map (partial str "java.awt.event.")
-       (utils/qw
+       (qw
         ActionListener
         AdjustmentListener
         AWTEventListener
@@ -27,7 +34,7 @@
 
 (def swing-listeners
   (map (partial str "javax.swing.event.")
-       (utils/qw
+       (qw
         AncestorListener
         CaretListener
         CellEditorListener

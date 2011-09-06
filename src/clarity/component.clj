@@ -2,8 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.contrib.str-utils2 :as str2]
             [clarity.event :as event]
-            [clarity.style :as style]
-            [clarity.utils :as utils])
+            [clarity.style :as style])
   (:import [clarity.style.Styleable]
            [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
            [javax.swing.text.html HTMLEditorKit]
@@ -220,7 +219,7 @@
   text and the input can be HTML. If the :rich flag is passed, the
   text is processed as markdown."
   [s & flags]
-  (let [font (utils/get-laf-property "Label.font")
+  (let [font (style/get-laf-property "Label.font")
         rich? (some #{:rich} flags)
         text (if rich?
                (str2/replace

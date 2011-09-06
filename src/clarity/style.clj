@@ -1,8 +1,33 @@
 (ns clarity.style
-  (require [clojure.contrib.str-utils2 :as str2]
-           [clarity.utils :as utils]))
+  (require [clojure.contrib.str-utils2 :as str2]))
 
-(def default-font (utils/get-laf-property "TextField.font"))
+;;; look and feel
+(defn set-system-laf []
+  (javax.swing.UIManager/setLookAndFeel
+   (javax.swing.UIManager/getCrossPlatformLookAndFeelClassName)))
+
+(defn get-laf-properties
+  ([] (get-laf-properties nil))
+  ([regex]
+     (let [defaults (javax.swing.UIManager/getLookAndFeelDefaults)]
+       (if regex
+         (filter #(re-seq regex (.toString (key %))) defaults)
+         defaults))))
+
+(defn find-laf-properties
+  ([] (find-laf-properties nil))
+  ([regex]
+     (let [matches (get-laf-properties regex)]
+       (doseq [entry matches]
+         (print (key entry) ": " (val entry) "\n")))))
+
+(defn get-laf-property
+  [key]
+  (javax.swing.UIManager/get key))
+
+;;; font defaults
+
+(def default-font (get-laf-property "TextField.font"))
 
 (def font-styles {:plain java.awt.Font/PLAIN
                   :italic java.awt.Font/ITALIC
@@ -14,6 +39,9 @@
                     :monospaced java.awt.Font/MONOSPACED
                     :sans java.awt.Font/SANS_SERIF
                     :sans-serif java.awt.Font/SANS_SERIF})
+
+
+;;; styleable
 
 (definterface Styleable
   (getCategories [])
@@ -35,6 +63,8 @@
 (defn styleable?
   [x]
   (instance? Styleable x))
+
+;;; sizes
 
 (defn derive-size
   "Given a numerical size and a size-spec, derive a new value. The
@@ -122,8 +152,8 @@
        (java.awt.Color. r g b)))
   ([r g b a]
      (if (and (float? r) (float? g) (float? b) (float a))
-       (java.awt.Color. (float r) (float g) (float b))
-       (java.awt.Color. r g b))))
+       (java.awt.Color. (float r) (float g) (float b) (float a))
+       (java.awt.Color. r g b a))))
 
 (defn mix-colors
   ([c1 c2]
