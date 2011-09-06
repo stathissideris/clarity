@@ -1,8 +1,11 @@
 (ns clarity.utils
   (:require [clarity.component :as c]
+            [clarity.style :as style]
             [clojure.contrib.swing-utils :as swing])
   (:import [javax.swing UIManager JFrame]
            [java.awt.image BufferedImage]))
+
+(def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
 
 (defn show-comp [comp]
   (doto (JFrame.)
@@ -12,8 +15,10 @@
 
 (defn- error-image [msg]
   (let [i (BufferedImage. 600 300 BufferedImage/TYPE_INT_RGB)
-        g (.getGraphics i)]
-    (.drawString g msg 10 20)
+        g (.getGraphics i)
+        icon-width (.getIconWidth *error-icon*)]
+    (.paintIcon *error-icon* nil g 0 0)
+    (.drawString g msg (+ 10 icon-width) 20)
     i))
 
 (defn watch-image
@@ -27,11 +32,13 @@
   ([image] (watch-image image 15))
   ([image fps]
      (let [get-image (fn [] (cond (instance? clojure.lang.IDeref image) @image
-                                  (fn? image) (image)
-                                  #_(try (image)
-                                         (catch Exception e
-                                           (error-image
-                                            (str (class e) ": " (.getMessage e)))))
+                                  (fn? image)
+                                  (try (image)
+                                       (catch Exception e
+                                         (do
+                                           (.printStackTrace e)
+                                           (error-image (str (.getName (class e))
+                                                             ", check your console")))))
                                   :otherwise image))
            cached-image (ref nil)
            panel (proxy [javax.swing.JPanel] []
