@@ -1,4 +1,7 @@
-(ns clarity.utils
+(ns clarity.dev
+  "This namespace contains a number of utilities indented to be used
+  during development. The functionality provided makes interactive
+  development of GUIs easier."
   (:require [clarity.component :as c]
             [clarity.style :as style]
             [clojure.contrib.swing-utils :as swing])
