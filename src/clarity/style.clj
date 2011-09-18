@@ -112,8 +112,11 @@
 
 (defn font
   "Constructs a font out of three optional named parameters, :name
-  :size :style. Style can be :plain :bold :italic or a vector
-  containing :bold and :italic."
+  :size :style. The name can be any valid font name, or a keyword
+  corresponding to one of the static font families (:dialog,
+  :dialog-input, :mono, :monospaced, :sans, :sans-serif). Style
+  can be :plain :bold :italic or a vector containing :bold
+  and :italic."
   [&{name :name style :style size :size
      :or {style (.getStyle default-font)
           size (.getSize default-font)}}]
@@ -130,11 +133,10 @@
   the passed ones. The parameters are the same as the (font) function,
   but the size can be derived by passing a size-spec as in
   the (derive-size) function."
-  [f &{name :name style :style size :size
+  [^java.awt.Font f &{name :name style :style size :size
        :or {name (.getName f)
             style (.getStyle f)
             size (.getSize f)}}]
-  {:pre [(isa? (class f) java.awt.Font)]}
   (font :name name
         :style style
         :size (derive-font-size f size)))

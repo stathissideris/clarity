@@ -2,18 +2,21 @@
   (:require [clarity.component :as c])
   (:import [java.awt BorderLayout FlowLayout]))
 
-(def response-map
+(def ^{:doc
+ "The map of built-in responses. :ok, :cancel, :yes, :no and :submit
+ are supported and replaced by English labels."}
+     response-map
      {:ok "OK"
       :cancel "Cancel"
       :yes "Yes"
       :no "No"
       :submit "Submit"})
 
-(def ok [:ok])
-(def submit [:submit])
-(def ok-cancel [:ok :cancel])
-(def yes-no [:yes :no])
-(def yes-no-cancel [:yes :no :cancel])
+(def ^{:doc "Single OK button"} ok [:ok])
+(def ^{:doc "Single submit button"} submit [:submit])
+(def ^{:doc "OK and Cancel buttons"} ok-cancel [:ok :cancel])
+(def ^{:doc "Yes and No buttons"} yes-no [:yes :no])
+(def ^{:doc "Yes, No and Cancel buttons"} yes-no-cancel [:yes :no :cancel])
 
 (defn- make-button [dialog button response]
   (let [text (if (string? button)
@@ -40,15 +43,15 @@
     panel))
 
 (defn dialog
-  "Usage:
+  "Example:
 
     (let [response (atom nil)
-          f (form :name "" :surname "")
+          f (form :name \"\" :surname \"\")
           d (dialog f [:ok :cancel] response)]
       (.setModal d true)
       (.setVisible d true)
       (println @response)
-      (println (value f)))     
+      (println (value f)))
 
   Constructs a dialog that has content as its main component, and a
   series of buttons at the bottom. The buttons parameter is a vector
@@ -57,7 +60,10 @@
   response atom is reset to the value that corresponds to the clicked
   button. If the passed button element was a keyword, then the same
   keyword is placed in the response atom. If the button element was a
-  string, then the same string is placed in the response."
+  string, then the same string is placed in the response.
+
+  If you don't mind using a blocking function, show-dialog is much
+  easier to use."
 
   [content buttons response]
   {:pre [(instance? java.awt.Component content)
@@ -76,7 +82,7 @@
   "Easily show a modal dialog and get the user response after the
   dialog has been closed. This is a blocking function.
 
-  Usage:
+  Example:
 
     (show-dialog (form :first-name \"\" :surname \"\") [:ok :cancel])
 

@@ -254,7 +254,7 @@
        ~'result)))
 
 (defmacro make
-  "Usage:
+  "Example:
 
      (make :button \"Hello\"
            (:id :hello-button)

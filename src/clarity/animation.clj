@@ -1,4 +1,6 @@
-(ns clarity.animation)
+(ns ^{:doc "Do not use, under heavy development"
+      :author "Stathis Sideris"}
+  clarity.animation)
 
 (defprotocol interpolatable
   (interpolate [start end t]))
