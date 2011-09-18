@@ -7,7 +7,7 @@
 (deftest by-category
   (is (= '("A" "B")
          (map #(.getText %)
-              (find-by-category (clarity.form/form :a 6 :b 8) :form-label)))))
+              (find-by-category (clarity.form/form :a 6 :b 8) :label)))))
 
 (deftest by-id
   (is (= "6"
