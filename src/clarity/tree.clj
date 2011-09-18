@@ -21,7 +21,7 @@
   ([model path]
      (let [path (coerce-to-array Object path)]
        (TreeModelEvent. model path)))
-  ([tree path indices objects]
+  ([model path indices objects]
      (let [path (coerce-to-array Object path)
            indices (coerce-to-array Integer/TYPE indices)
            objects (coerce-to-array Object objects)]
