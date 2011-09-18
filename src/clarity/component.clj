@@ -1,4 +1,6 @@
 (ns clarity.component
+  "This namespace is the core of the clarity library. The two main
+  functions are make and do-component."
   (:require [clojure.string :as str]
             [clojure.contrib.str-utils2 :as str2]
             [clarity.event :as event]
@@ -14,7 +16,10 @@
 ;;TODO does not work!
 (defn component? [x] (instance? clarity.component.Component x))
 
-(defn id [c]
+(defn id
+  "Get the identifier of the passed component. Returns nil if there is
+  an exception."
+  [c]
   (try
     (.getId c)
     (catch Exception e nil)))
@@ -27,15 +32,27 @@
                  JSplitPane/VERTICAL_SPLIT)
                one two))
 
-(defn categories [comp] (.getCategories comp))
-(defn add-category [comp s] (.addCategory comp s))
-(defn remove-category [comp s] (.removeCategory comp s))
-(defn has-category [comp category]
+(defn categories
+  "Get the categories of the component."
+  [comp] (.getCategories comp))
+
+(defn add-category
+  "Add a category to the component."
+  [comp s] (.addCategory comp s))
+
+(defn remove-category
+  "Remove a category from the component"
+  [comp s] (.removeCategory comp s))
+
+(defn has-category
+  "Check whether the component has the passed category."
+  [comp category]
   (try
     (contains? (categories comp) category)
     (catch Exception e false)))
 
 (defprotocol HasValue
+  "A component that has a value that can be retrieved and set."
   (value [this])
   (set-value [this value]))
 
@@ -59,20 +76,18 @@
     (.getName component)
     (str (.getName (.getClass component)) "#" (.hashCode component))))
 
-(extend-type java.awt.Container
-  HasValue
-  (value [this]
-    (apply hash-map
-           (apply concat
-                  (map (fn [x] [(id x) (value x)])
-                       (filter
-                        #(and (id %)
-                              (satisfies? HasValue %)) (.getComponents this))))))
-  (set-value [this value]))
-
 (defprotocol HasSelection
   (selection [this])
   (set-selection [this selection]))
+
+(extend-type javax.swing.text.JTextComponent
+  HasSelection
+  (selection [this] [(.getSelectedText this)
+                     (.getSelectionStart this)
+                     (.getSelectionEnd this)])
+  (set-selection [this selection] (.select this ;;TODO set doesn't work
+                                           (first selection)
+                                           (second selection))))
 
 (extend-type javax.swing.JComboBox
   HasSelection
@@ -114,7 +129,7 @@
 (defn pairs-to-map [p]
   (into {} (for [[k & v] p] [k (apply vector v)])))
 
-(defn parse-component-params
+(defn- parse-component-params
   "Expects a form like (class-type const-params* [setters]*) and
   splits them into const-params, special-setter forms (:id etc) event-
   forms and setter-forms."
@@ -133,7 +148,7 @@
   (let [pieces (str/split name #"-")]
     (symbol (apply str ".set" (map str/capitalize pieces)))))
 
-(defn process-event-form
+(defn- process-event-form
   "Expects a form like (:listener-name [(:on-event (code))+]) and
   produces a bit of code that is suitable to be used in a doto macro
   to add the listener to the component."
@@ -141,7 +156,40 @@
   `(~(event/listener-keyword-to-adder key)
     (event/listener ~key ~@handler-forms)))
 
-(defmacro do-component [component & expressions]
+(defmacro do-component
+  "This macro is similar to clojure.core/doto, and in fact it supports
+  an identical syntax. If an expression starts with a keyword, the
+  name of the keyword is used to derive the equivalent setter name and
+  the setter is invoked instead. For example, the following are
+  equivalent:
+
+     (do-component frame
+       (.setVisible true))
+
+     (do-component frame
+       (:visible true))
+
+  Dashes in the keywords are translated to camel case,
+  i.e. :focus-painted results in .setFocusPainted to be called.
+
+  This function also supports easily adding event handling to the
+  passed component. For example you can say:
+
+     (do-component button
+       (:on-click (println \"clicked!\"))
+       (:on-mouse-over (.setText this \"mouse over\")))
+
+  This will create a listener using clarity.event/listener and adds it
+  to the component. See the documentation of the event namespace for
+  more details.
+
+  do-component binds \"this\" to the component that was passed. Also,
+  the event expressions are grouped together so that the above example
+  produces a single javax.swing.event.MouseListener instead of two.
+
+  The expressions can be lists or vectors, either will work."
+  
+  [component & expressions]
   (let [{:keys [event-forms
                 setter-forms]} (parse-component-params (conj expressions :dummy))
                 event-forms (group-by event-form-listener event-forms)]
@@ -167,7 +215,7 @@
          (map str/capitalize
               (str/split name #"-")))))
 
-(defn process-special-setter [[key [& params]]]
+(defn- process-special-setter [[key [& params]]]
   (cond (or (= :category key) (= :categories key))
         `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
 
@@ -194,9 +242,66 @@
        ~'result)))
 
 (defmacro make
-  "Creates a Swing component which also implements the
-  clarity.style.Styleable interface. The first parameter is a
-  lisp-ified version of the normal names of swing components."
+  "Usage:
+
+     (make :button \"Hello\"
+           (:id :hello-button)
+           (:category :plain-button)
+           (:border nil))
+ 
+  Creates a proxy to a Swing component that is also a
+  clarity.component.Component and a clarity.styleable.Styleable.
+
+  The first parameter is either a Java class or a keyword. If a Java
+  class is passed, it is used as is in the created proxy. Keywords are
+  traslated to Swing class names (:button becomes
+  javax.swing.JButton). Namespace-qualified symbols are translated to
+  the respective Swing sub-namespace (:table/table-header becomes
+  javax.swing.table.JTreeHeader). If you really need to use AWT
+  components, then prefix the keyword with the awt
+  namespace (:awt/button becomes java.awt.Button).
+
+  The parameters after the first one are interpreted as parameters to
+  the constructor of the Swing component, until a list is
+  encountered. This means that you can say
+
+    (make :button \"Hello\")
+
+  but (make :button (str \"Hello \" name)) will *not* work because the
+  the list (str \" Hello \" name) is not interpreted as a parameter to
+  the constructor. You can achieve the above by using the :init
+  special form, as in:
+
+    (make :button
+          (:init (str \"Hello \" name)))
+
+  This complication is necessary because the macro passes the lists to
+  a call to (do-component). There are 3 exceptions to that. The :init
+  form which passes its parameters the constructor of the component,
+  and the :id and :category forms. The :id form is used to define an
+  identifier for the component and the :categories form is used to
+  assign a number of categories to the component. These are useful for
+  selection and styling purposes. The categories are analogous to CSS
+  classes in HTML. You can use :category as a synomym.
+
+  Any remaining forms are passed to (do-component) which uses them to
+  call setters of the component or create event handlers to attach to
+  the component (see the relevant documentation).
+
+  So a let's have a closer look at the above example:
+
+     (make :button \"Hello\"
+             ;;(javax.swing.JButton \"Hello\")
+
+           (:id :hello-button)
+             ;;sets the ID to :hello-button
+
+           (:category :plain-button)
+             ;;sets the categories to :plain-button
+
+           (:border nil))
+             ;;passed to (do-com0ponent), calls .setBorder"
+
   [& args]
   (let [{:keys [constructor
                 special-setter-forms

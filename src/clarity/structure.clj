@@ -10,6 +10,22 @@
             (fn [node] (.getComponents node))
             root))
 
+(extend-type java.awt.Container
+  c/HasValue
+  (value [this]
+         (into {}
+               (map (fn [x] [(c/id x) (c/value x)])
+                    (filter
+                     #(and (c/id %)
+                           (satisfies? c/HasValue %)) (.getComponents this)))))
+  (set-value [this value]
+             (let [components (comp-seq this)]
+               (for [c components]
+                 (if (and (not (nil? (c/id c)))
+                          (satisfies? c/HasValue c)
+                          (contains? value (c/id c)))
+                   (c/set-value c (get value (c/id c))))))))
+
 (defn filter-by-category
   [category coll]
   (filter #(c/has-category % category) coll))
