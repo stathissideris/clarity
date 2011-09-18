@@ -2,21 +2,44 @@
   (:require [clarity.component :as c])
   (:import [java.awt BorderLayout FlowLayout]))
 
-(defn make-button [dialog button]
+(def response-map
+     {:ok "OK"
+      :cancel "Cancel"
+      :yes "Yes"
+      :no "No"
+      :submit "Submit"})
+
+(def ok [:ok])
+(def submit [:submit])
+(def ok-cancel [:ok :cancel])
+(def yes-no [:yes :no])
+(def yes-no-cancel [:yes :no :cancel])
+
+(defn make-button [dialog button response]
   (let [text (if (string? button)
                button
-               button)] ;;TODO handle keywords
-    (c/make :button button
-            [:category :dialog-button]
-            [:on-click (.dispose dialog)])))
+               (get response-map button))
+        id (if (keyword? button) button nil)]
+    (if (nil? id)
+      (c/make :button text
+              [:category :dialog-button]
+              [:on-click
+               (reset! response (.getText this))
+               (.dispose dialog)])
+      (c/make :button text
+              [:id id]
+              [:category :dialog-button]
+              [:on-click
+               (reset! response id)
+               (.dispose dialog)]))))
 
-(defn make-button-panel [dialog buttons]
+(defn make-button-panel [dialog buttons response]
   (let [panel (c/make :panel [:category :dialog-button-panel])]
     (.setLayout panel (FlowLayout.))
-    (doall (map #(.add panel (make-button dialog %)) buttons))
+    (doall (map #(.add panel (make-button dialog % response)) buttons))
     panel))
 
-(defn dialog [content buttons]
+(defn dialog [content buttons response]
   {:pre [(instance? java.awt.Component content)
          (or (vector? buttons)
              (map? buttons))]}
@@ -26,11 +49,17 @@
     (doto dialog
       (.setLayout (BorderLayout.))
       (.add content BorderLayout/CENTER)
-      (.add (make-button-panel dialog buttons) BorderLayout/SOUTH)
+      (.add (make-button-panel dialog buttons response) BorderLayout/SOUTH)
+      (.setModal true)
       (.pack))))
 
-(defn show-dialog [content buttons]
-  (.setVisible (dialog content buttons) true))
+(defn show-dialog
+  ([content]
+     (show-dialog content [:ok]))
+  ([content buttons]
+     (let [response (atom :closed)]
+       (.setVisible (dialog content buttons response) true)
+       {:value (c/value content) :response @response})))
 
 ;;example
 #_(show-dialog
