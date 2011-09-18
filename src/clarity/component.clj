@@ -1,6 +1,8 @@
-(ns clarity.component
-  "This namespace is the core of the clarity library. The two main
-  functions are make and do-component."
+(ns
+    ^{:doc "The core of the clarity library. The two main functions
+    are make and do-component."
+      :author "Stathis Sideris"}
+  clarity.component
   (:require [clojure.string :as str]
             [clojure.contrib.str-utils2 :as str2]
             [clarity.event :as event]
@@ -70,6 +72,16 @@
   HasValue
   (value [this] (.isSelected this))
   (set-value [this value] (.setSelected this value)))
+
+(extend-type javax.swing.JSpinner
+  HasValue
+  (value [this] (.getValue this))
+  (set-value [this value] (.setValue this value)))
+
+(extend-type javax.swing.JSlider
+  HasValue
+  (value [this] (.getValue this))
+  (set-value [this value] (.setValue this value)))
 
 (defn component-name [component]
   (if (.getName component)

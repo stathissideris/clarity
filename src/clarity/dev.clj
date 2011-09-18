@@ -1,7 +1,10 @@
-(ns clarity.dev
-  "This namespace contains a number of utilities indented to be used
-  during development. The functionality provided makes interactive
+(ns  
+    ^{:doc
+  "A collection of utilities indented to be used during
+  development. The functionality provided makes interactive
   development of GUIs easier."
+      :author "Stathis Sideris"}
+  clarity.dev
   (:require [clarity.component :as c]
             [clarity.style :as style]
             [clojure.contrib.swing-utils :as swing])
@@ -10,7 +13,9 @@
 
 (def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
 
-(defn show-comp [comp]
+(defn show-comp
+  "Show the passed component in a JFrame."
+  [comp]
   (doto (JFrame.)
     (.add comp)
     (.pack)
@@ -25,13 +30,13 @@
     i))
 
 (defn watch-image
-  ;; "Shows the passed java.awt.Image in a frame, and re-paints at 15
-  ;; FPS (or the specified FPS). You can also pass a reference to an
-  ;; Image, which will be dereferenced at every frame, or an
-  ;; image-returning function, which will be called at every frame.  The
-  ;; function returns a future which can be cancelled to stop the
-  ;; re-painting. Of course the re-painting stops automatically when the
-  ;; frame is closed."
+  "Shows the passed java.awt.Image in a frame, and re-paints at 15
+  FPS (or the specified FPS). You can also pass a reference to an
+  Image, which will be dereferenced at every frame, or an
+  image-returning function, which will be called at every frame.  The
+  function returns a future which can be cancelled to stop the
+  re-painting. Of course the re-painting stops automatically when the
+  frame is closed."
   ([image] (watch-image image 15))
   ([image fps]
      (let [get-image (fn [] (cond (instance? clojure.lang.IDeref image) @image
@@ -66,6 +71,8 @@
                 (future-cancel updater)])
        updater)))
        
-(defn dispose-all-frames []
+(defn dispose-all-frames
+  "Call .dispose on all frames."
+  []
   (doseq [frame (java.awt.Frame/getFrames)]
     (.dispose frame)))

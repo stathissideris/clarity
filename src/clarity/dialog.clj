@@ -95,7 +95,6 @@
   only have an \"OK\" button. If the dialog is closed by clicking on
   the close button of the window title bar, the :response will
   be :closed."
-
   ([content]
      (show-dialog content [:ok]))
   ([content buttons]
