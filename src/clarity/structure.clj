@@ -76,6 +76,37 @@
       (if (nil? parent) p
         (recur parent (conj p parent))))))
 
+(defn id-matcher
+  "Produces a matcher function that accepts a component and tests
+  whether it has the passed id."
+  [id]
+  (fn [component]
+    (= id (c/id component))))
+
+(defn category-matcher
+  "Produces a matcher function that accepts a component and tests
+  whether it has the passed category."
+  [category]
+  (fn [component]
+    (c/has-category component category)))
+
+(defn type-matcher
+  "Produces a matcher function that accepts a component and tests
+  whether it is an instance of tha passed class. If type is a keyword,
+  the rules that are used in the component/make macro are also used to
+  translate it to a Swing (or AWT) class."
+  [type]
+  (let [type (if (keyword? type)
+               (c/make-class type)
+               type)]
+    (fn [component]
+      (instance? type component))))
+
+;; (defn match-path [component matchers]
+;;   (let [p (path component)]
+;;     (loop [
+
+
 ;;;selectors
 
 ;; (category :form

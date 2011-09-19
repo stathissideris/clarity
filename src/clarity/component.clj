@@ -227,6 +227,9 @@
          (map str/capitalize
               (str/split name #"-")))))
 
+(defn make-class [name]
+  (java.lang.Class/forName (make-class-name name)))
+
 (defn- process-special-setter [[key [& params]]]
   (cond (or (= :category key) (= :categories key))
         `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
