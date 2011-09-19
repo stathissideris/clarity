@@ -51,11 +51,11 @@
 
 (defn styleable-mixin []
   `((getCategories [] (deref ~'cat))
-    (addCategory [~'s] (alter ~'cat ~'conj ~'s))
-    (removeCategory [~'s] (alter ~'cat ~'disj ~'s))
-    (setFont [& ~'args] (if (instance? ~'java.awt.Font (first ~'args))
-                          (proxy-super ~'setFont (first ~'args))
-                          (proxy-super ~'setFont (apply font ~'args))))))
+    (~'addCategory [~'s] (alter ~'cat ~'conj ~'s))
+    (~'removeCategory [~'s] (alter ~'cat ~'disj ~'s))
+    (~'setFont [& ~'args] (if (instance? ~'java.awt.Font (first ~'args))
+                            (proxy-super ~'setFont (first ~'args))
+                            (proxy-super ~'setFont (apply font ~'args))))))
 
 ;;this now works: (show-comp (make :button "Testing" [:font :size "x6"]))
 

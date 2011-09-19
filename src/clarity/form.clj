@@ -5,6 +5,7 @@
   (:require [clojure.string :as str]
             [clojure.contrib.miglayout :as mig]
             [clarity.component :as c]
+            [clarity.style :as style]
             [clarity.functions :as fun]
             clarity.list)
   (:import [javax.swing BorderFactory]))
@@ -39,9 +40,13 @@
       (text? x)))
 
 (defn- make-header [_ s & {level :level}]
-  (if level
-    (list (c/make :label s [:category (keyword (str "header-" level))]) [:span 2])
-    (list (c/make :label s [:category :header]) [:span 2])))
+  (list
+   (c/do-component
+    (if level
+      (c/make :label s [:category (keyword (str "header-" level))])
+      (c/make :label s [:category :header]))
+    (:font (style/font :size "x1.5" :style :bold)))
+   [:span 2]))
 
 ;;TODO under development
 (defn- start-group [[_ title] args]
