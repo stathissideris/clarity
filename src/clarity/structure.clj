@@ -102,10 +102,32 @@
     (fn [component]
       (instance? type component))))
 
-;; (defn match-path [component matchers]
-;;   (let [p (path component)]
-;;     (loop [
+(defn direct-parent-matcher
+  "Produces a matcher function that accepts a component and tests
+  whether the direct parent of the component matches the passed
+  parent-matcher and the component itself matches the
+  child-matcher. If the component does not have a parent, the matcher
+  does not match."
+  [parent-matcher child-matcher]
+  (fn [component]
+    (let [parent (.getParent component)]
+      (if (nil? parent) false
+          (and (parent-matcher parent) (child-matcher component))))))
 
+(defn any-parent-matcher
+  "Produces a matcher function that accepts a component and tests
+  whether any of the ancestors of the component matches the passed
+  parent-matcher and the component itself matches the
+  child-matcher. If the component does not have a parent, the matcher
+  does not match."
+  [parent-matcher child-matcher]
+  (fn [component]
+    (if (child-matcher component)
+      (loop [parent (.getParent component)]
+        (if (nil? parent) false
+            (if (parent-matcher parent) true
+                (recur (.getParent parent)))))
+      false)))
 
 ;;;selectors
 
