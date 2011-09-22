@@ -102,6 +102,19 @@
     (fn [component]
       (instance? type component))))
 
+(defn and-matcher
+  [& matchers]
+  (fn [component]
+    (every? #(= % true) (map #(% component) matchers))))
+
+(defn or-matcher
+  [& matchers]
+  (fn [component]
+    (some #(= % true) (map #(% component) matchers))))
+
+(defn any-matcher []
+  (fn [component] true))
+
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
   whether the direct parent of the component matches the passed
@@ -129,10 +142,88 @@
                 (recur (.getParent parent)))))
       false)))
 
-;;;selectors
+(def ... "...")
 
-;; (category :form
-;;           category :form-header
-;; 
-;; (filter-by-category :form-header
-;;                     (mapcat () (find-by-category :form))
+(defn path-matcher*
+  "A matcher that combines multiple matchers so that the direct
+  parents (or indirect ancestors) of a component can be matched. The
+  matchers are chained in the same order as in CSS (from parent to
+  child). If you separate matchers with the ... symbol (or the \"...\"
+  string), then a indirect matcher will combine the two
+  matchers. Otherwise the matchers are always direct.
+
+  Example:
+
+    (path-matcher* (id-matcher :panel1)
+                   ...
+                   (category-matcher :cat1)
+                   (type-matcher :button))
+
+  This will match a button whose direct parent has the :cat1 category
+  and one of the ancestors of the parent has an ID of :panel1."
+  
+  [& args]
+  (loop [matcher-so-far (first args)
+         matchers (next args)
+         is-indirect false]
+    (cond (nil? matchers) matcher-so-far
+          (= ... (first matchers)) (recur matcher-so-far (next matchers) true)
+          is-indirect (recur (any-parent-matcher
+                              matcher-so-far
+                              (first matchers))
+                             (next matchers)
+                             false)
+          :else (recur (direct-parent-matcher
+                        matcher-so-far
+                        (first matchers))
+                       (next matchers)
+                       false))))
+
+(let [lookup {'id 'id-matcher
+              'category 'category-matcher
+              'type 'type-matcher
+              '* 'any-matcher
+              'or 'or-matcher
+              'and 'and-matcher
+              '... 'clarity.structure/...}]
+  (defmacro path-matcher
+    "This is a macro that makes the syntax of (path-matcher*) a bit
+  lighter. It makes the following replaces to the first element of all
+  passed expressions:
+
+    id        id-matcher
+    category  category-matcher
+    type      type-matcher
+    *         any-matcher
+    or        or-matcher
+    and       and-matcher
+    ...       clarity.structure/...
+
+  The produced matcher combines multiple matchers so that the direct
+  parents (or indirect ancestors) of a component can be matched. The
+  matchers are chained in the same order as in CSS (from parent to
+  child). If you separate matchers with the ... symbol (or the \"...\"
+  string), then a indirect matcher will combine the two
+  matchers. Otherwise the matchers are always direct.
+
+  Example:
+
+    (path-matcher (id :panel1)
+                  ...
+                  (category :cat1)
+                  (type :button))
+
+  This will match a button whose direct parent has the :cat1 category
+  and one of the ancestors of the parent has an ID of :panel1."
+    [& args]
+
+    
+    (let [replace-firsts (fn replace-firsts [exp]
+                           (if (not (sequential? exp))
+                             (if (contains? lookup exp)
+                               (get lookup exp)
+                               exp)
+                             (map replace-firsts exp)))
+          p (replace-firsts args)]
+      `(path-matcher* ~@p))))
+ 
