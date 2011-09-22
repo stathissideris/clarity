@@ -96,6 +96,33 @@
                (type-matcher :button)
                (category-matcher :cat)) panel2)))))
 
+;;this test makes sure that 2 direct-parent matchers that
+;;differ in that the one is parent-expensive and the other
+;;is child-expensive will both run correctly
+(deftest test-direct-parent-assymetrical-cost
+  (let [panel1 (c/make :panel)
+        panel2 (c/make :panel (:category :cat))
+        button (c/make :button (:id :the-button))
+        m (direct-parent-matcher (category-matcher :cat)
+                                 (or-matcher (id-matcher :the-button)
+                                             (type-matcher :panel)
+                                             (id-matcher :the-other-button)
+                                             (category-matcher :lala)))
+        m2 (direct-parent-matcher (or-matcher (id-matcher :the-panel)
+                                              (type-matcher :panel)
+                                              (category-matcher :cat))
+                                  (id-matcher :the-button))]
+    (.add panel2 button)
+    (.add panel1 panel2)
+    (is (= 8 (get (meta m) :clarity.structure/cost)))
+    (is (= :clarity.structure/test-parent-first
+           (get (meta m) :clarity.structure/priority)))
+    (is (m button))    
+    (is (= 6 (get (meta m2) :clarity.structure/cost)))
+    (is (= :clarity.structure/test-child-first
+           (get (meta m2) :clarity.structure/priority)))
+    (is (m2 button))))
+
 (deftest test-direct-parent-nested
   (let [matcher (direct-parent-matcher
                  (direct-parent-matcher

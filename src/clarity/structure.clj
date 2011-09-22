@@ -53,19 +53,34 @@
 
 ;; various matchers that can be composed to make complex selectors
 
-(defn id-matcher
+(defn- get-cost
+  "Get the cost associated with a matcher in order to decide whether
+  to run the parent or the child matcher first in the
+  direct-parent-matcher. This is a small optimisation and probably not
+  worth it, but it was so easy and fun to develop that I couldn't
+  resist."
+  [matcher]
+  (let [c (get (meta matcher) ::cost)]
+    (if (nil? c) 1 c))) ;;assume 1 if not present
+
+(defn
+  id-matcher
   "Produces a matcher function that accepts a component and tests
   whether it has the passed id."
   [id]
-  (fn [component]
-    (= id (c/id component))))
+  (with-meta 
+    (fn [component]
+      (= id (c/id component)))
+    {::cost 1}))
 
 (defn category-matcher
   "Produces a matcher function that accepts a component and tests
   whether it has the passed category."
   [category]
-  (fn [component]
-    (c/has-category component category)))
+  (with-meta
+    (fn [component]
+      (c/has-category component category))
+    {::cost 2}))
 
 (defn type-matcher
   "Produces a matcher function that accepts a component and tests
@@ -76,21 +91,29 @@
   (let [type (if (keyword? type)
                (c/make-class type)
                type)]
-    (fn [component]
-      (instance? type component))))
+    (with-meta
+      (fn [component]
+        (instance? type component))
+      {::cost 2})))
 
 (defn and-matcher
   [& matchers]
-  (fn [component]
-    (every? #(= % true) (map #(% component) matchers))))
+  (with-meta
+    (fn [component]
+      (every? #(= % true) (map #(% component) matchers)))
+    {::cost (apply + (map get-cost matchers))}))
 
 (defn or-matcher
   [& matchers]
-  (fn [component]
-    (some #(= % true) (map #(% component) matchers))))
+  (with-meta
+    (fn [component]
+      (some #(= % true) (map #(% component) matchers)))
+    {::cost (apply + (map get-cost matchers))}))
 
 (defn any-matcher []
-  (fn [component] true))
+  (with-meta
+    (fn [component] true)
+    {::cost 0}))
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -99,10 +122,25 @@
   child-matcher. If the component does not have a parent, the matcher
   does not match."
   [parent-matcher child-matcher]
-  (fn [component]
-    (let [parent (.getParent component)]
-      (if (nil? parent) false
-          (and (parent-matcher parent) (child-matcher component))))))
+  (let [child-first (> (get-cost parent-matcher) (get-cost child-matcher))
+        m
+        ;; produce a different function depending on which matcher
+        ;; is more expensive
+        (if child-first
+          (fn [component]
+            (let [parent (.getParent component)]
+              (if (nil? parent) false
+                  (and (child-matcher component) (parent-matcher parent)))))
+          (fn [component]
+            (let [parent (.getParent component)]
+              (if (nil? parent) false
+                  (and (parent-matcher parent) (child-matcher component))))))]
+    (with-meta
+      m
+      {::cost (+ (get-cost parent-matcher)
+                 (get-cost child-matcher))
+       ::priority
+       (if child-first ::test-child-first ::test-parent-first)})))
 
 (defn any-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -111,13 +149,16 @@
   child-matcher. If the component does not have a parent, the matcher
   does not match."
   [parent-matcher child-matcher]
-  (fn [component]
-    (if (child-matcher component)
-      (loop [parent (.getParent component)]
-        (if (nil? parent) false
-            (if (parent-matcher parent) true
-                (recur (.getParent parent)))))
-      false)))
+  (with-meta
+    (fn [component]
+      (if (child-matcher component)
+        (loop [parent (.getParent component)]
+          (if (nil? parent) false
+              (if (parent-matcher parent) true
+                  (recur (.getParent parent)))))
+        false))
+    {::cost (+ (get-cost parent-matcher)
+               (get-cost child-matcher))}))
 
 (def ... "...")
 
