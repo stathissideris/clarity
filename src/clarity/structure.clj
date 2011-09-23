@@ -260,6 +260,7 @@
   and one of the ancestors of the parent has an ID of :panel1."
     [& args]
     (let [replace-firsts (fn replace-firsts [exp]
+                           ;;TODO would be nice to have this check
                            ;; {:pre [(if (sequential? exp)
                            ;;          (symbol? (first exp))
                            ;;          true)]}
