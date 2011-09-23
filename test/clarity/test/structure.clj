@@ -4,11 +4,6 @@
   (:require clarity.form)
   (:require [clarity.component :as c]))
 
-(deftest by-category
-  (is (= '("A" "B")
-         (map #(.getText %)
-              (find-by-category (clarity.form/form :a 6 :b 8) :label)))))
-
 (deftest by-id
   (is (= "6"
          (.getText (find-by-id (clarity.form/form :a 6 :b 7) :a)))))
@@ -195,7 +190,7 @@
                                     (.add button))))]
     (is (matcher button)))
   (let [button (c/make :button)
-        matcher (path-matcher
+        matcher (path-matcher*
                  (id-matcher :panel1)
                  (category-matcher :cat1)
                  (type-matcher :button))
