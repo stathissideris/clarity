@@ -32,16 +32,6 @@
   [root id]
   (first (filter #(= id (c/id %)) (comp-seq root))))
 
-;;TODO redefine to use selectors
-(defn $
-  "With a single parameter, it applies (find-by-id) to the last opened
-  java.awt.Frame. With 2 parameters it's just a synonym
-  of (find-by-id)."
-  ([id]
-     (let [frames (java.awt.Frame/getFrames)]
-       ($ (last frames) id)))
-  ([root id] (find-by-id root id)))
-
 (defn path
   "Returns a list representing the path of components from the
   top-most parent to comp."
@@ -271,4 +261,26 @@
                              (map replace-firsts exp)))
           p (replace-firsts args)]
       `(path-matcher* ~@p))))
- 
+
+(defn select
+  "Filter root and the component tree below it and return all the
+  components that match the matcher."
+  [root matcher]
+  (filter matcher (comp-seq root)))
+
+(defmacro $
+  "Convenience macro. If passed a keyword, it runs find-by-id on the
+  root with the keyword as the ID. Otherwise, it calls (select) on the
+  root with a matcher constructed by passing matchers to the (matcher)
+  macro."
+  ([root & matchers]
+     (if (keyword? (first matchers))
+       `(find-by-id ~root ~(first matchers))
+       `(select ~root (matcher ~@matchers)))))
+
+(defmacro $-last-frame
+  "Like ($) but uses the last-opened frame as root. Useful for
+  debugging."
+  [& matchers]
+  `(let [frames (java.awt.Frame/getFrames)]
+     `($ (last frames) ~@matchers)))
