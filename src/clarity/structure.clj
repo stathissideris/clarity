@@ -56,12 +56,16 @@
 (defn- get-cost
   "Get the cost associated with a matcher in order to decide whether
   to run the parent or the child matcher first in the
-  direct-parent-matcher. This is a small optimisation and probably not
-  worth it, but it was so easy and fun to develop that I couldn't
-  resist."
+  direct-parent-matcher and the matching order for the
+  or-matcher. This is a small optimisation and probably not worth it,
+  but it was so easy and fun to develop that I couldn't resist."
   [matcher]
   (let [c (get (meta matcher) ::cost)]
     (if (nil? c) 1 c))) ;;assume 1 if not present
+
+(defn- get-debug [matcher]
+  (let [d (get (meta matcher) ::debug)]
+    (if (nil? d) :no-debug d)))
 
 (defn
   id-matcher
@@ -71,7 +75,8 @@
   (with-meta 
     (fn [component]
       (= id (c/id component)))
-    {::cost 1}))
+    {::cost 1
+     ::debug [:id id]}))
 
 (defn category-matcher
   "Produces a matcher function that accepts a component and tests
@@ -80,7 +85,8 @@
   (with-meta
     (fn [component]
       (c/has-category component category))
-    {::cost 2}))
+    {::cost 2
+     ::debug [:category category]}))
 
 (defn type-matcher
   "Produces a matcher function that accepts a component and tests
@@ -94,26 +100,35 @@
     (with-meta
       (fn [component]
         (instance? type component))
-      {::cost 2})))
+      {::cost 2
+       ::debug [:type type]})))
 
 (defn and-matcher
   [& matchers]
   (with-meta
     (fn [component]
       (every? #(= % true) (map #(% component) matchers)))
-    {::cost (apply + (map get-cost matchers))}))
+    {::cost (apply + (map get-cost matchers))
+     ::debug (into [] (map get-debug matchers))}))
 
 (defn or-matcher
   [& matchers]
-  (with-meta
-    (fn [component]
-      (some #(= % true) (map #(% component) matchers)))
-    {::cost (apply + (map get-cost matchers))}))
+  (let [matchers (sort-by get-cost matchers)]
+    (with-meta
+      (fn [component]
+        (loop [ms matchers]
+          (if ms (if ((first ms) component)
+                   true
+                   (recur (next ms)))
+              false)))
+      {::cost (apply + (map get-cost matchers))
+       ::debug (into [] (map get-debug matchers))})))
 
 (defn any-matcher []
   (with-meta
     (fn [component] true)
-    {::cost 0}))
+    {::cost 0
+     ::debug '*}))
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -139,6 +154,7 @@
       m
       {::cost (+ (get-cost parent-matcher)
                  (get-cost child-matcher))
+       ::debug [:direct-parent (get-debug parent-matcher) (get-debug child-matcher)]
        ::priority
        (if child-first ::test-child-first ::test-parent-first)})))
 
@@ -158,7 +174,8 @@
                   (recur (.getParent parent)))))
         false))
     {::cost (+ (get-cost parent-matcher)
-               (get-cost child-matcher))}))
+               (get-cost child-matcher))
+     ::debug [:any-parent (get-debug parent-matcher) (get-debug child-matcher)]}))
 
 (def ... "...")
 
@@ -203,8 +220,9 @@
               '* 'any-matcher
               'or 'or-matcher
               'and 'and-matcher
-              '... 'clarity.structure/...}]
-  (defmacro path-matcher
+              '... 'clarity.structure/...
+              'path 'path-matcher*}]
+  (defmacro matcher
     "This is a macro that makes the syntax of (path-matcher*) a bit
   lighter. It makes the following replaces to the first element of all
   passed expressions:
@@ -216,6 +234,7 @@
     or        or-matcher
     and       and-matcher
     ...       clarity.structure/...
+    path      path-matcher*
 
   The produced matcher combines multiple matchers so that the direct
   parents (or indirect ancestors) of a component can be matched. The
@@ -224,19 +243,26 @@
   string), then a indirect matcher will combine the two
   matchers. Otherwise the matchers are always direct.
 
-  Example:
+  Examples:
 
-    (path-matcher (id :panel1)
-                  ...
-                  (category :cat1)
-                  (type :button))
+    (matcher (id :panel1)
+              ...
+              (category :cat1)
+              (type :button))
+
+    (matcher
+      (and
+        (path (id :panel) ... (type :button))
+        (path (category :fancy-panel)
+              ... (category :cat1) (type :button))))
 
   This will match a button whose direct parent has the :cat1 category
   and one of the ancestors of the parent has an ID of :panel1."
     [& args]
-
-    
     (let [replace-firsts (fn replace-firsts [exp]
+                           ;; {:pre [(if (sequential? exp)
+                           ;;          (symbol? (first exp))
+                           ;;          true)]}
                            (if (not (sequential? exp))
                              (if (contains? lookup exp)
                                (get lookup exp)

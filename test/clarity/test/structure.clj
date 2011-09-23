@@ -166,7 +166,21 @@
           (id-matcher :the-button)) button))
     (is (not ((any-parent-matcher
                (type-matcher :button)
-               (id-matcher :the-button)) button)))))
+               (id-matcher :the-button)) button)))
+    (let [button (c/make :button)
+          p (c/make
+             :panel
+             (:id :panel)
+             (:category :fancy-panel)
+             (.add (c/make
+                    :panel
+                    (:id :panel2)
+                    (.add (c/make
+                           :panel
+                           (:category :cat1)
+                           (.add button))))))]
+      (is ((any-parent-matcher (id-matcher :panel)
+                               (type-matcher :button)) button)))))
 
 (deftest test-path-matcher-direct-only
   (let [button (c/make :button)
@@ -222,11 +236,26 @@
                              :panel
                              (:category :cat1)
                              (.add button))))))]
-    (is (not (matcher button)))))
+    (is (not (matcher button))))
+  (let [button (c/make :button)
+        p (c/make
+           :panel
+           (:id :panel)
+           (:category :fancy-panel)
+           (.add (c/make
+                  :panel
+                  (:id :panel2)
+                  (.add (c/make
+                         :panel
+                         (:category :cat1)
+                         (.add button))))))]
+    (is ((path-matcher* (id-matcher :panel)
+                        ...
+                        (type-matcher :button)) button))))
 
 (deftest test-path-matcher-macro
   (let [button (c/make :button)
-        matcher (path-matcher
+        matcher (matcher
                  (id :panel1) ... (type :button))
         panel (c/make
                :panel
@@ -239,7 +268,7 @@
                              (.add button))))))]
     (is (matcher button)))
   (let [button (c/make :button)
-        matcher (path-matcher
+        matcher (matcher
                  (id :panel1) ... (or (type :label) (type :button)))
         panel (c/make
                :panel
@@ -252,7 +281,7 @@
                              (.add button))))))]
     (is (matcher button)))
   (let [label (c/make :label)
-        matcher (path-matcher
+        matcher (matcher
                  (id :panel1) ... (or (type :label) (type :button)))
         panel (c/make
                :panel
@@ -265,7 +294,7 @@
                              (.add label))))))]
     (is (matcher label)))
   (let [button (c/make :button)
-        matcher (path-matcher
+        matcher (matcher
                  (id :panel1) ... (type :button))
         panel (c/make
                :panel
@@ -276,4 +305,38 @@
                              :panel
                              (:category :cat1)
                              (.add button))))))]
-    (is (not (matcher button)))))
+    (is (not (matcher button))))
+  (let [button (c/make :button)
+        p (c/make
+           :panel
+           (:id :panel)
+           (:category :fancy-panel)
+           (.add (c/make
+                  :panel
+                  (:id :panel2)
+                  (.add (c/make
+                         :panel
+                         (:category :cat1)
+                         (.add button))))))]
+    (is ((matcher (id :panel) ... (type :button)) button))
+    (is ((matcher (category :fancy-panel)
+                  ...
+                  (category :cat1)
+                  (type :button)) button)))
+  (let [button (c/make :button)
+        matcher (matcher
+                 (and
+                  (path (id :panel) ... (type :button))
+                  (path (category :fancy-panel) ... (category :cat1) (type :button))))
+        panel (c/make
+               :panel
+               (:id :panel)
+               (:category :fancy-panel)
+               (.add (c/make
+                      :panel
+                      (:id :panel2)
+                      (.add (c/make
+                             :panel
+                             (:category :cat1)
+                             (.add button))))))]
+    (is (matcher button))))
