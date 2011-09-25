@@ -9,6 +9,7 @@
             [clarity.style :as style]
             [clojure.contrib.swing-utils :as swing]
             [clojure.contrib.miglayout :as mig])
+  (:use [clarity.structure :only [$]])
   (:import [javax.swing UIManager JFrame]
            [java.awt.image BufferedImage]))
 
@@ -90,7 +91,7 @@
          (c/make :panel (:id :main-panel)) :span
 
          :wrap
-         (c/make :label "" (:time-label)))]
+         (c/make :label "Not started" (:id :time-label)))]
     (c/make :frame
             (.add panel))))
 
@@ -115,16 +116,19 @@
 (defn stop-action [state]
   (assoc state :running false))
 
+(defn update-indicator [indicator]
+  (if (= "[ ]" (.getText indicator))
+    (.setText indicator "[*]")
+    (.setText indicator "[ ]")))
+
 (defn watch-component
   [component]
-  (let [time-label (c/make :label "Not started")
-        button-play (c/make :button "stop")
-        frame (c/make :frame
-                      (:layout (java.awt.BorderLayout.))
-                      (.add button-play java.awt.BorderLayout/NORTH)
-                      (.add time-label java.awt.BorderLayout/SOUTH))
-        panel (c/make :panel
-                      (:layout (java.awt.BorderLayout.)))
+  (let [frame (component-watcher-gui)
+        time-label ($ frame :time-label)
+        button-play ($ frame :start-button)
+        spinner ($ frame :delay-spinner)
+        panel ($ frame :main-panel)
+        indicator ($ frame :indicator)
 
         get-component
         (cond (symbol? component)
@@ -147,6 +151,7 @@
                    (swing/do-swing
                     (.removeAll panel)
                     (.add panel (get-component) java.awt.BorderLayout/CENTER)
+                    (update-indicator indicator)
                     (.setText time-label (str (java.util.Date.)))
                     (.revalidate frame)
                     (.pack frame))))]
@@ -159,12 +164,11 @@
                        (do
                          (send updater start-action)
                          (.setText button-play "stop")))))
-    (c/do-component frame
-                    (.add panel)
-                    (.pack)
-                    (:visible true)
-                    (:on-window-closing
-                     (send updater stop-action)))
+    (doto frame
+      (.pack)
+      (:visible true)
+      (:on-window-closing
+       (send updater stop-action)))
     ;;(send updater start-action)
     updater))
 
@@ -176,7 +180,6 @@
                             :surnane "Sideris"
                             :text3 "text"
                             :text4 "wewew"
-                            [:text "You do have sex, don't you? LOL!"]
                             :sex ["male" "female"]))))
 #_(defn f2 [] (c/make :panel
                      (:layout (java.awt.FlowLayout.))
