@@ -7,7 +7,8 @@
   clarity.dev
   (:require [clarity.component :as c]
             [clarity.style :as style]
-            [clojure.contrib.swing-utils :as swing])
+            [clojure.contrib.swing-utils :as swing]
+            [clojure.contrib.miglayout :as mig])
   (:import [javax.swing UIManager JFrame]
            [java.awt.image BufferedImage]))
 
@@ -70,7 +71,125 @@
                [:on-window-closing
                 (future-cancel updater)])
        updater)))
-       
+
+;;; watch component
+
+(defn component-watcher-gui []
+  (let [panel
+        (mig/miglayout
+         (c/make :panel)
+         (c/make :button "stop" (:id :start-button))
+         (c/make :label "[ ]" (:id :indicator))
+
+         [:gap :unrelated]
+         (c/make :label "Update every ")
+         (c/make :spinner (:id :delay-spinner))
+         (c/make :label " sec")
+
+         :wrap
+         (c/make :panel (:id :main-panel)) :span
+
+         :wrap
+         (c/make :label "" (:time-label)))]
+    (c/make :frame
+            (.add panel))))
+
+(defn periodic-caller [t fun]
+  (agent {:fn fun
+          :running false
+          :date nil
+          :delay t}))
+
+(defn call-action [state]
+  (if (:running state)
+    (do (send-off *agent* call-action)
+        ((:fn state))
+        (Thread/sleep (:delay state))
+        (assoc state :date (java.util.Date.)))
+    state))
+
+(defn start-action [state]
+  (send-off *agent* call-action)
+  (assoc state :running true))
+
+(defn stop-action [state]
+  (assoc state :running false))
+
+(defn watch-component
+  [component]
+  (let [time-label (c/make :label "Not started")
+        button-play (c/make :button "stop")
+        frame (c/make :frame
+                      (:layout (java.awt.BorderLayout.))
+                      (.add button-play java.awt.BorderLayout/NORTH)
+                      (.add time-label java.awt.BorderLayout/SOUTH))
+        panel (c/make :panel
+                      (:layout (java.awt.BorderLayout.)))
+
+        get-component
+        (cond (symbol? component)
+              #((eval component))
+               
+              (instance? clojure.lang.IDeref component)
+              #(@component)
+                     
+              (fn? component)
+              #(try (component)
+                    (catch Exception e
+                      (do
+                        (.printStackTrace e)
+                        nil)))
+              :otherwise component)
+        
+        updater (periodic-caller
+                 500
+                 (fn []
+                   (swing/do-swing
+                    (.removeAll panel)
+                    (.add panel (get-component) java.awt.BorderLayout/CENTER)
+                    (.setText time-label (str (java.util.Date.)))
+                    (.revalidate frame)
+                    (.pack frame))))]
+    (c/do-component button-play
+                    (:on-click
+                     (if (:running @updater)
+                       (do
+                         (send updater stop-action)
+                         (.setText button-play "start"))
+                       (do
+                         (send updater start-action)
+                         (.setText button-play "stop")))))
+    (c/do-component frame
+                    (.add panel)
+                    (.pack)
+                    (:visible true)
+                    (:on-window-closing
+                     (send updater stop-action)))
+    ;;(send updater start-action)
+    updater))
+
+
+#_(defn f [] (c/make :panel
+                     (.add
+                      (form [:header "Personal info"]
+                            :first-name "Stathis"
+                            :surnane "Sideris"
+                            :text3 "text"
+                            :text4 "wewew"
+                            [:text "You do have sex, don't you? LOL!"]
+                            :sex ["male" "female"]))))
+#_(defn f2 [] (c/make :panel
+                     (:layout (java.awt.FlowLayout.))
+                     (.add (c/make :label "ddd"))
+                     (.add (c/make :button "lalalala"))))
+#_(def p (watch-component 'f))
+#_(def p (watch-component #(f)))
+#_(send p inject-fn f)
+#_(send p start-action)
+#_(send p stop-action)
+
+
+
 (defn dispose-all-frames
   "Call .dispose on all frames."
   []
