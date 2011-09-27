@@ -7,10 +7,11 @@
   clarity.dev
   (:require [clarity.component :as c]
             [clarity.style :as style]
+            [clarity.util :as util]
             [clojure.contrib.swing-utils :as swing]
             [clojure.contrib.miglayout :as mig])
   (:use [clarity.structure :only [$]])
-  (:import [javax.swing UIManager JFrame]
+  (:import [javax.swing UIManager JFrame ImageIcon]
            [java.awt.image BufferedImage]))
 
 (def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
@@ -75,24 +76,39 @@
 
 ;;; watch component
 
+(def watcher-backgrounds
+  (cycle [:black :chequered :white]))
+
+(def green-led-off-icon
+  (ImageIcon. (util/load-image-resource "resources/green_led_off.png")))
+
+(def green-led-on-icon
+  (ImageIcon. (util/load-image-resource "resources/green_led_on.png")))
+
 (defn component-watcher-gui []
   (let [panel
         (mig/miglayout
-         (c/make :panel)
+         (c/make :panel (:id :panel))
+         :layout :nogrid :fillx ;;:debug
+         :row "[][grow][]"
+         (c/make :label green-led-off-icon (:id :indicator))
          (c/make :button "stop" (:id :start-button))
-         (c/make :label "[ ]" (:id :indicator))
 
+         (c/make :panel) :growx
+         (c/make :button "back" (:id :background))
+         (c/make :label "Update every")
          [:gap :unrelated]
-         (c/make :label "Update every ")
          (c/make :spinner (:id :delay-spinner))
-         (c/make :label " sec")
-
-         :wrap
-         (c/make :panel (:id :main-panel)) :span
-
-         :wrap
-         (c/make :label "Not started" (:id :time-label)))]
+         (c/make :label "sec") :wrap
+         (c/scroll-pane
+          (c/make :panel
+                  (:id :main-panel)
+                  (:background (style/color :black))))
+         :grow :span :wrap
+         (c/make :label "Not started" (:id :time-label))
+         :span)]
     (c/make :frame
+            (:title "Clarity Component Watcher")
             (.add panel))))
 
 (defn periodic-caller [t fun]
@@ -116,10 +132,13 @@
 (defn stop-action [state]
   (assoc state :running false))
 
+(defn change-period-action [state period]
+  (assoc state :delay period))
+
 (defn update-indicator [indicator]
-  (if (= "[ ]" (.getText indicator))
-    (.setText indicator "[*]")
-    (.setText indicator "[ ]")))
+  (if (= green-led-off-icon (.getIcon indicator))
+    (.setIcon indicator green-led-on-icon)
+    (.setIcon indicator green-led-off-icon)))
 
 (defn watch-component
   [component]
@@ -152,41 +171,54 @@
                     (.removeAll panel)
                     (.add panel (get-component) java.awt.BorderLayout/CENTER)
                     (update-indicator indicator)
-                    (.setText time-label (str (java.util.Date.)))
+                    (.setText time-label (str "Updated at: "
+                                              (str (java.util.Date.))))
                     (.revalidate frame)
                     (.pack frame))))]
-    (c/do-component button-play
-                    (:on-click
-                     (if (:running @updater)
-                       (do
-                         (send updater stop-action)
-                         (.setText button-play "start"))
-                       (do
-                         (send updater start-action)
-                         (.setText button-play "stop")))))
-    (doto frame
-      (.pack)
-      (:visible true)
-      (:on-window-closing
-       (send updater stop-action)))
+    (c/set-value spinner 0.5)
+    (c/do-component
+     spinner
+     (:on-state-changed
+      (let [value (c/value (spinner))]
+        (if (> value 0.2)
+          (send updater change-period-action (* 1000 value))))))
+    (c/do-component
+     button-play
+     (:on-click
+      (if (:running @updater)
+        (do
+          (send updater stop-action)
+          (.setText button-play "start")
+          (.setIcon indicator green-led-off-icon))
+        (do
+          (send updater start-action)
+          (.setText button-play "stop")))))
+    (c/do-component frame
+                    (.pack)
+                    (:visible true)
+                    (:on-window-closing
+                     (send updater stop-action)))
     ;;(send updater start-action)
     updater))
 
 
+#_(use 'clarity.form)
 #_(defn f [] (c/make :panel
                      (.add
                       (form [:header "Personal info"]
                             :first-name "Stathis"
                             :surnane "Sideris"
+                            :text2 ""
                             :text3 "text"
-                            :text4 "wewew"
-                            :sex ["male" "female"]))))
+                            :sex ["male" "female"]
+                            ))))
 #_(defn f2 [] (c/make :panel
                      (:layout (java.awt.FlowLayout.))
                      (.add (c/make :label "ddd"))
                      (.add (c/make :button "lalalala"))))
 #_(def p (watch-component 'f))
 #_(def p (watch-component #(f)))
+#_(def p (watch-component #($ (component-watcher-gui) :panel)))
 #_(send p inject-fn f)
 #_(send p start-action)
 #_(send p stop-action)
