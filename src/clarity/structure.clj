@@ -13,18 +13,18 @@
 (extend-type java.awt.Container
   c/HasValue
   (value [this]
-         (into {}
-               (map (fn [x] [(c/id x) (c/value x)])
-                    (filter
-                     #(and (c/id %)
-                           (satisfies? c/HasValue %)) (.getComponents this)))))
+    (into {}
+          (map (fn [x] [(c/id x) (c/value x)])
+               (filter
+                #(and (c/id %)
+                      (satisfies? c/HasValue %)) (.getComponents this)))))
   (set-value [this value]
-             (let [components (comp-seq this)]
-               (for [c components]
-                 (if (and (not (nil? (c/id c)))
-                          (satisfies? c/HasValue c)
-                          (contains? value (c/id c)))
-                   (c/set-value c (get value (c/id c))))))))
+    (let [components (comp-seq this)]
+      (for [c components]
+        (if (and (not (nil? (c/id c)))
+                 (satisfies? c/HasValue c)
+                 (contains? value (c/id c)))
+          (c/set-value c (get value (c/id c))))))))
 
 (defn find-by-id
   "Finds recursively the child of root (or root itself) that has the
