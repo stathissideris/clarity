@@ -1,5 +1,5 @@
 (defproject clarity "0.5.0-SNAPSHOT"
-  :description "FIXME: write"
+  :description "Clojure GUI library, based on Swing."
   :dependencies [[org.clojure/clojure "1.2.0"]
 				 [org.clojure/clojure-contrib "1.2.0"]
                  [org.clojars.nakkaya/miglayout "3.7.3.1"]
