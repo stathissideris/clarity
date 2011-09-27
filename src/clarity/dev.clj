@@ -208,8 +208,6 @@
                       (form [:header "Personal info"]
                             :first-name "Stathis"
                             :surnane "Sideris"
-                            :text2 ""
-                            :text3 "text"
                             :sex ["male" "female"]
                             ))))
 #_(defn f2 [] (c/make :panel
