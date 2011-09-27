@@ -53,12 +53,19 @@
     (contains? (categories comp) category)
     (catch Exception e false)))
 
+;;;;;; value
+
 (defprotocol HasValue
   "A component that has a value that can be retrieved and set."
   (value [this])
   (set-value [this value]))
 
 (extend-type javax.swing.JTextField
+  HasValue
+  (value [this] (.trim (.getText this)))
+  (set-value [this value] (.setText this value)))
+
+(extend-type javax.swing.JLabel
   HasValue
   (value [this] (.trim (.getText this)))
   (set-value [this value] (.setText this value)))
@@ -87,6 +94,8 @@
   (if (.getName component)
     (.getName component)
     (str (.getName (.getClass component)) "#" (.hashCode component))))
+
+;;; selection
 
 (defprotocol HasSelection
   (selection [this])
