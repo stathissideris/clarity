@@ -95,6 +95,9 @@
                 (= "x" sign)
                 (* original-size amount))))))
 
+(defn dimension [w h]
+  (java.awt.Dimension. w h))
+
 ;;; font
 
 (defn ^{:private true} interpret-font-style [style]

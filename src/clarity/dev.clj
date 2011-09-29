@@ -95,10 +95,16 @@
          (c/make :button "stop" (:id :start-button))
 
          (c/make :panel) :growx
+         (c/make :check-box "Always on top"
+                 (:id :on-top)
+                 (:selected true))
          (c/make :button "back" (:id :background))
          (c/make :label "Update every")
          [:gap :unrelated]
-         (c/make :spinner (:id :delay-spinner))
+         (c/make :spinner
+                 (:init (c/make javax.swing.SpinnerNumberModel
+                                (:init 0.5 0.2 nil 0.2)))
+                 (:id :delay-spinner))
          (c/make :label "sec") :wrap
          (c/scroll-pane
           (c/make :panel
@@ -109,6 +115,7 @@
          :span)]
     (c/make :frame
             (:title "Clarity Component Watcher")
+            (:always-on-top true)
             (.add panel))))
 
 (defn periodic-caller [t fun]
@@ -148,6 +155,7 @@
         spinner ($ frame :delay-spinner)
         panel ($ frame :main-panel)
         indicator ($ frame :indicator)
+        on-top ($ frame :on-top)
 
         get-component
         (cond (symbol? component)
@@ -175,13 +183,16 @@
                                               (str (java.util.Date.))))
                     (.revalidate frame)
                     (.pack frame))))]
-    (c/set-value spinner 0.5)
     (c/do-component
      spinner
      (:on-state-changed
-      (let [value (c/value (spinner))]
+      (let [value (c/value spinner)]
         (if (> value 0.2)
           (send updater change-period-action (* 1000 value))))))
+    (c/do-component
+     on-top
+     (:on-click
+      (.setAlwaysOnTop frame (c/value on-top))))
     (c/do-component
      button-play
      (:on-click
@@ -196,9 +207,12 @@
     (c/do-component frame
                     (.pack)
                     (:visible true)
+                    (:size (style/dimension 550 400))
                     (:on-window-closing
                      (send updater stop-action)))
-    ;;(send updater start-action)
+    (swing/do-swing (.toFront frame)
+                    (.replaint frame))
+    (send updater start-action)
     updater))
 
 
@@ -206,8 +220,10 @@
 #_(defn f [] (c/make :panel
                      (.add
                       (form [:header "Personal info"]
+                            [:text "Make sure you enter all the info!!"]
                             :first-name "Stathis"
-                            :surnane "Sideris"
+                            :surname "Sideris"
+                            :address "122 essex road"
                             :sex ["male" "female"]
                             ))))
 #_(defn f2 [] (c/make :panel
