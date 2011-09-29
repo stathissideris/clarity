@@ -2,14 +2,15 @@
 
 Clojure GUI library, based on Swing.
 
-If you are using leiningen, add the following to your `project.clj`:
+If you are using leiningen, add the following dependency to your
+`project.clj`:
 
 `[clarity "0.5.0-SNAPSHOT"]`
 
 Example of the form facilities:
 
 ````clojure
-    (dialog
+    (show-dialog
      (form [:header "The form"]
            [:text "Please fill in the **entire** form." :rich]
            :first-name ""
