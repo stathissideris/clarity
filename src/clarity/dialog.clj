@@ -88,12 +88,12 @@
 
     ... user enters details and presses the OK button ...
 
-    > {:value {:first-name \"Joe\", :surname \"Smith\"}, :response :ok}
+    {:value {:first-name \"Joe\", :surname \"Smith\"}, :response :ok}
 
   A modal dialog showing the component in content and the relevant
   buttons is created and the thread blocks. After the dialog is
   closed, a map is returned, with two keys, :value and :response. The
-  value of :value is the result of calling clarity.component.value on
+  value of :value is the result of calling clarity.component/value on
   the main contents of the dialog (see HasValue protocol) and
   the :response key represents the button that was clicked. This can
   be the text of the button or its ID, depending on what was passed in
