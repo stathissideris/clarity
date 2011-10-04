@@ -1,4 +1,5 @@
 (ns clarity.structure
+  (:use clojure.walk)
   (:require [clarity.component :as c]))
 
 (defn comp-seq
@@ -119,6 +120,13 @@
     (fn [component] true)
     {::cost 0
      ::debug '*}))
+
+;; (defn before-matcher
+;;   [before-m this-m]
+;;   (fn [component]
+;;     (let [parent (.getParent component)]
+;;       (if parent
+;;         (let [index (. ;;TODO
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -250,6 +258,7 @@
   and one of the ancestors of the parent has an ID of :panel1."
     [& args]
     (let [replace-firsts (fn replace-firsts [exp]
+                           ;;TODO replace with clojure.walk/postwalk-replace
                            ;;TODO would be nice to have this check
                            ;; {:pre [(if (sequential? exp)
                            ;;          (symbol? (first exp))
@@ -284,3 +293,30 @@
   [& matchers]
   `(let [frames (java.awt.Frame/getFrames)]
      `($ (last frames) ~@matchers)))
+
+(defmacro with-component
+  "Macro for doing a lot of stuff to components with IDs within
+  root. In the passed forms, it replaces all the symbols starting with
+  \"$\" - for example $symbol - with calls to ($ root :symbol), and
+  wraps forms in a do statement. For example:
+
+  (with-component panel
+    (set-value $slider 10) 
+    (do-component $button
+	  (:on-click (.setText $label \"lalala\"))))
+
+  ...expands to:
+
+  (do
+    (set-value ($ panel :slider) 10)
+    (do-component ($ panel :button)
+      (:on-click (.setText ($ panel :label) \"lalala\"))))"
+  [root & forms]
+  (let [replace-dollar
+        (fn [f]
+          (if (and (symbol? f)
+                   (.startsWith (name f) "$"))
+            `($ ~root ~(keyword (.substring (name f) 1)))
+            f))]
+    `(do
+       ~@(map #(postwalk replace-dollar %) forms))))
