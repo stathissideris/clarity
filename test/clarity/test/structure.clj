@@ -53,6 +53,22 @@
   (is (not ((or-matcher (category-matcher :la) (category-matcher :lo))
             (c/make :button (:category :laX :lolo))))))
 
+(deftest test-before-matcher
+  (let [button (c/make :button (:id :button))
+        panel (c/make :panel
+                      (.add (c/make :button (:id :sibling)))
+                      (.add button))]
+    (is ((before-matcher (id-matcher :sibling) (id-matcher :button))
+         button)))
+  (let [button (c/make :button (:id :button))
+        panel (c/make :panel
+                      (.add (c/make :button (:id :other)))
+                      (.add button))]
+    (is (not ((before-matcher (id-matcher :sibling) (id-matcher :button))
+              button))))
+  (is (not ((before-matcher (id-matcher :sibling) (id-matcher :button))
+            (c/make :button)))))
+  
 (deftest test-direct-parent
   (let [panel1 (c/make :panel (:id :panel1))
         panel2 (c/make :panel (:id :panel2))

@@ -121,12 +121,21 @@
     {::cost 0
      ::debug '*}))
 
-;; (defn before-matcher
-;;   [before-m this-m]
-;;   (fn [component]
-;;     (let [parent (.getParent component)]
-;;       (if parent
-;;         (let [index (. ;;TODO
+(defn before-matcher
+  "Produces a matcher function that matches is the passed component
+  has a sibling that comes before it in the layout, the sibling
+  matches before-m and the component itself matches this-m."
+  [before-m this-m]
+  (fn [component]
+    (let [parent (.getParent component)]
+      (if parent
+        (let [children (seq (.getComponents parent))
+              index (.indexOf children component)]
+          (if (not (zero? index))
+            (let [sibling (nth children (dec index))]
+              (and
+               (before-m sibling)
+               (this-m component)))))))))
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
