@@ -1,6 +1,6 @@
 <img src="https://github.com/stathissideris/clarity/raw/master/src/resources/logo.png">
 
-Clojure GUI library, based on Swing.
+Clojure GUI library, based on Swing. See the project wiki for details on how to use it.
 
 If you are using leiningen, add the following dependency to your
 `project.clj`:
