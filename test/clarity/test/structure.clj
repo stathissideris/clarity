@@ -68,7 +68,23 @@
               button))))
   (is (not ((before-matcher (id-matcher :sibling) (id-matcher :button))
             (c/make :button)))))
-  
+
+(deftest test-after-matcher
+  (let [button (c/make :button (:id :button))
+        panel (c/make :panel
+                      (.add button)
+                      (.add (c/make :button (:id :sibling))))]
+    (is ((after-matcher (id-matcher :button) (id-matcher :sibling))
+         button)))
+  (let [button (c/make :button (:id :button))
+        panel (c/make :panel
+                      (.add button)
+                      (.add (c/make :button (:id :other))))]
+    (is (not ((after-matcher (id-matcher :button) (id-matcher :sibling))
+              button))))
+  (is (not ((after-matcher (id-matcher :button) (id-matcher :sibling))
+            (c/make :button)))))
+
 (deftest test-direct-parent
   (let [panel1 (c/make :panel (:id :panel1))
         panel2 (c/make :panel (:id :panel2))

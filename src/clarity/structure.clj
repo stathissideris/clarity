@@ -42,6 +42,38 @@
       (if (nil? parent) p
         (recur parent (conj p parent))))))
 
+(defn children
+  "Returns the list of child components of parent as a seq."
+  [parent]
+  (seq (.getComponents parent)))
+
+(defn parent
+  "Returns the parent of the component."
+  [component]
+  (.getParent component))
+
+(defn previous-sibling
+  "Returns the previous sibling of the component, nil if there is no
+  parent or if component is the first child."
+  [component]
+  (let [p (parent component)]
+    (if p
+      (let [c (children p)
+            index (.indexOf c component)]
+        (if (not (zero? index))
+          (nth c (dec index)))))))
+
+(defn next-sibling
+  "Returns the next sibling of the component, nil if there is no
+  parent or if component is the last child."
+  [component]
+  (let [p (parent component)]
+    (if p
+      (let [c (children p)
+            index (.indexOf c component)]
+        (if (not= index (dec (count c)))
+          (nth c (inc index)))))))
+
 ;; various matchers that can be composed to make complex selectors
 
 (defn- get-cost
@@ -122,20 +154,26 @@
      ::debug '*}))
 
 (defn before-matcher
-  "Produces a matcher function that matches is the passed component
+  "Produces a matcher function that matches if the passed component
   has a sibling that comes before it in the layout, the sibling
   matches before-m and the component itself matches this-m."
   [before-m this-m]
   (fn [component]
-    (let [parent (.getParent component)]
-      (if parent
-        (let [children (seq (.getComponents parent))
-              index (.indexOf children component)]
-          (if (not (zero? index))
-            (let [sibling (nth children (dec index))]
-              (and
-               (before-m sibling)
-               (this-m component)))))))))
+    (let [sibling (previous-sibling component)]
+      (and sibling
+           (before-m sibling)
+           (this-m component)))))
+
+(defn after-matcher
+  "Produces a matcher function that matches if the passed component
+  has a sibling that comes after it in the layout, the sibling
+  matches before-m and the component itself matches this-m."
+  [this-m after-m]
+  (fn [component]
+    (let [sibling (next-sibling component)]
+      (and sibling
+           (this-m component)
+           (after-m sibling)))))
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -227,6 +265,8 @@
               '* 'any-matcher
               'or 'or-matcher
               'and 'and-matcher
+              'before 'before-matcher
+              'after 'after-matcher
               '... 'clarity.structure/...
               'path 'path-matcher*}]
   (defmacro matcher
@@ -240,6 +280,8 @@
     *         any-matcher
     or        or-matcher
     and       and-matcher
+    before    before-matcher
+    after     after-matcher
     ...       clarity.structure/...
     path      path-matcher*
 
