@@ -153,7 +153,7 @@
     {::cost 0
      ::debug '*}))
 
-(defn before-matcher
+(defn after-matcher
   "Produces a matcher function that matches if the passed component
   has a sibling that comes before it in the layout, the sibling
   matches before-m and the component itself matches this-m."
@@ -164,7 +164,7 @@
            (before-m sibling)
            (this-m component)))))
 
-(defn after-matcher
+(defn before-matcher
   "Produces a matcher function that matches if the passed component
   has a sibling that comes after it in the layout, the sibling
   matches before-m and the component itself matches this-m."
@@ -259,15 +259,15 @@
                        (next matchers)
                        false))))
 
-(let [lookup {'id 'id-matcher
-              'category 'category-matcher
-              'type 'type-matcher
-              '* 'any-matcher
-              'or 'or-matcher
-              'and 'and-matcher
-              'before 'before-matcher
-              'after 'after-matcher
-              '... 'clarity.structure/...
+(let [lookup {'id 'clarity.structure/id-matcher
+              'category 'clarity.structure/category-matcher
+              'type 'clarity.structure/type-matcher
+              '* 'clarity.structure/any-matcher
+              'or 'clarity.structure/or-matcher
+              'and 'clarity.structure/and-matcher
+              'before 'clarity.structure/before-matcher
+              'after 'clarity.structure/after-matcher
+              '... 'clarity.structure/clarity.structure/...
               'path 'path-matcher*}]
   (defmacro matcher
     "This is a macro that makes the syntax of (path-matcher*) a bit

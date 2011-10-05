@@ -7,6 +7,7 @@
             [clarity.component :as c]
             [clarity.style :as style]
             [clarity.functions :as fun]
+            [clarity.structure :as s]
             clarity.list)
   (:import [javax.swing BorderFactory]))
 
@@ -138,6 +139,16 @@
   (reduce concat
           (map handle-form-token
                (tokens params))))
+
+(defn enable-form-field
+  "Enables (or disables) a form field in the form and possibly its
+  immediately previous sibling if the sibling exists and its a label."
+  ([panel key] (enable-form-field panel key true))
+  ([panel key enabled]
+     (map #(.setEnabled % enabled)
+          (s/$ panel
+               (or (id key)
+                   (before (type :label) (id key)))))))
 
 (defn form
   "Simple usage:
