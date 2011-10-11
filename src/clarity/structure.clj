@@ -11,6 +11,19 @@
             (fn [node] (.getComponents node))
             root))
 
+;;TODO the following looks sinful, but is it?
+(defprotocol Seqable
+  (seq [this]))
+
+(extend-type Object
+  Seqable
+  (seq [this] (clojure.core/seq this)))
+
+(extend-type java.awt.Container
+  Seqable
+  (seq [this] (comp-seq this)))
+;;--end of sin
+
 (extend-type java.awt.Container
   c/HasValue
   (value [this]
