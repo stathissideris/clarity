@@ -11,19 +11,6 @@
             (fn [node] (.getComponents node))
             root))
 
-;;TODO the following looks sinful, but is it?
-(defprotocol Seqable
-  (seq [this]))
-
-(extend-type Object
-  Seqable
-  (seq [this] (clojure.core/seq this)))
-
-(extend-type java.awt.Container
-  Seqable
-  (seq [this] (comp-seq this)))
-;;--end of sin
-
 (extend-type java.awt.Container
   c/HasValue
   (value [this]
@@ -280,7 +267,7 @@
               'and 'clarity.structure/and-matcher
               'before 'clarity.structure/before-matcher
               'after 'clarity.structure/after-matcher
-              '... 'clarity.structure/clarity.structure/...
+              '... 'clarity.structure/...
               'path 'path-matcher*}]
   (defmacro matcher
     "This is a macro that makes the syntax of (path-matcher*) a bit

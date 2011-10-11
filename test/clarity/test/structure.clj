@@ -58,7 +58,7 @@
         panel (c/make :panel
                       (.add (c/make :button (:id :sibling)))
                       (.add button))]
-    (is ((before-matcher (id-matcher :sibling) (id-matcher :button))
+    (is ((after-matcher (id-matcher :sibling) (id-matcher :button))
          button)))
   (let [button (c/make :button (:id :button))
         panel (c/make :panel
@@ -74,7 +74,7 @@
         panel (c/make :panel
                       (.add button)
                       (.add (c/make :button (:id :sibling))))]
-    (is ((after-matcher (id-matcher :button) (id-matcher :sibling))
+    (is ((before-matcher (id-matcher :button) (id-matcher :sibling))
          button)))
   (let [button (c/make :button (:id :button))
         panel (c/make :panel
