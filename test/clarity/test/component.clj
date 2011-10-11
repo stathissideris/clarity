@@ -5,13 +5,11 @@
 (deftest make-simple
   (let [button (make :button)]
     (is (instance? javax.swing.JButton button))
-    (is (.isAssignableFrom clarity.style.Styleable (class button)))
     (is (.isAssignableFrom clarity.component.Component (class button)))))
 
 (deftest make-simple-awt
   (let [button (make :awt/button)]
     (is (instance? java.awt.Button button))
-    (is (.isAssignableFrom clarity.style.Styleable (class button)))
     (is (.isAssignableFrom clarity.component.Component (class button)))))
 
 (deftest make-with-const-args
@@ -48,8 +46,8 @@
 (deftest make-with-categories
   (let [button1 (make :button (:category :a :b))
         button2 (make :button (:categories :c :d))]
-    (is (= #{:a :b} (.getCategories button1)))
-    (is (= #{:c :d} (.getCategories button2)))))
+    (is (= #{:a :b} (categories button1)))
+    (is (= #{:c :d} (categories button2)))))
 
 (deftest make-with-events-one-listener
   (let [label (make :label "testing events"

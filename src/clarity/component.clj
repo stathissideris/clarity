@@ -12,8 +12,18 @@
            [javax.swing.text.html HTMLEditorKit]
            [com.petebevin.markdown MarkdownProcessor]))
 
-(definterface Component
-  (getId []))
+(defprotocol Component
+  (get-id [this])
+  (categories [this])
+  (add-category [this c])
+  (remove-category [this c]))
+
+(defn component-mixin []
+  ;;TODO really ref?
+  (let [cat (ref #{})]
+    {"categories" (fn [this] (deref cat))
+     "add_category" (fn [this c] (alter cat conj c))
+     "remove_category" (fn [this c] (alter cat disj c))}))
 
 ;;TODO does not work!
 (defn component? [x] (instance? clarity.component.Component x))
@@ -23,7 +33,7 @@
   an exception."
   [c]
   (try
-    (.getId c)
+    (get-id c)
     (catch Exception e nil)))
 
 (def special-setters #{:init :id :category :categories})
@@ -33,18 +43,6 @@
                  JSplitPane/HORIZONTAL_SPLIT
                  JSplitPane/VERTICAL_SPLIT)
                one two))
-
-(defn categories
-  "Get the categories of the component."
-  [comp] (.getCategories comp))
-
-(defn add-category
-  "Add a category to the component."
-  [comp s] (.addCategory comp s))
-
-(defn remove-category
-  "Remove a category from the component"
-  [comp s] (.removeCategory comp s))
 
 (defn has-category
   "Check whether the component has the passed category."
@@ -241,7 +239,7 @@
 
 (defn- process-special-setter [[key [& params]]]
   (cond (or (= :category key) (= :categories key))
-        `(dosync ~@(map (fn [cat] `(.addCategory ~'result ~cat)) params))))
+        `(dosync ~@(map (fn [cat] `(add-category ~'result ~cat)) params))))
 
 (defmacro make-component [component
                           const-params
@@ -257,9 +255,9 @@
     `(let [~'id ~(if (contains? special-setters :id)
                    (first (:id special-setters)))
            ~'result
-           (proxy [~clazz Component clarity.style.Styleable] [~@init-params]
-             (~'getId [] ~'id))]
-       (update-proxy ~'result (style/styleable-mixin))
+           (proxy [~clazz clarity.component.Component] [~@init-params]
+             (get_id [] ~'id))]
+       (update-proxy ~'result (component-mixin))
        ~@(map process-special-setter special-setters)
        ~'result)))
 

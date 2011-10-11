@@ -40,29 +40,6 @@
                     :sans java.awt.Font/SANS_SERIF
                     :sans-serif java.awt.Font/SANS_SERIF})
 
-
-;;; styleable
-
-(definterface Styleable
-  (getCategories [])
-  (addCategory [s])
-  (removeCategory [s])
-  (setFont [& args]))
-
-(defn styleable-mixin []
-  ;;TODO really ref?
-  (let [cat (ref #{})]
-    {"getCategories" (fn [this] (deref cat))
-     "addCategory" (fn [this s] (alter cat conj s))
-     "removeCategory" (fn [this s] (alter cat disj s))}))
-
-;;this now works: (show-comp (make :button "Testing" [:font :size "x6"]))
-
-;;TODO does not work!
-(defn styleable?
-  [x]
-  (instance? Styleable x))
-
 ;;; sizes
 
 (defn derive-size
