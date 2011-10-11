@@ -50,12 +50,11 @@
   (setFont [& args]))
 
 (defn styleable-mixin []
-  `((getCategories [] (deref ~'cat))
-    (~'addCategory [~'s] (alter ~'cat ~'conj ~'s))
-    (~'removeCategory [~'s] (alter ~'cat ~'disj ~'s))
-    (~'setFont [& ~'args] (if (instance? ~'java.awt.Font (first ~'args))
-                            (proxy-super ~'setFont (first ~'args))
-                            (proxy-super ~'setFont (apply font ~'args))))))
+  ;;TODO really ref?
+  (let [cat (ref #{})]
+    {"getCategories" (fn [this] (deref cat))
+     "addCategory" (fn [this s] (alter cat conj s))
+     "removeCategory" (fn [this s] (alter cat disj s))}))
 
 ;;this now works: (show-comp (make :button "Testing" [:font :size "x6"]))
 

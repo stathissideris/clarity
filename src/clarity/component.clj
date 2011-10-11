@@ -254,14 +254,12 @@
         init-params (if (contains? special-setters :init)
                       (:init special-setters)
                       const-params)]
-    ;;TODO: really ref?
     `(let [~'id ~(if (contains? special-setters :id)
                    (first (:id special-setters)))
-           ~'cat (ref #{})
            ~'result
            (proxy [~clazz Component clarity.style.Styleable] [~@init-params]
-             (~'getId [] ~'id)
-             ~@(style/styleable-mixin))]
+             (~'getId [] ~'id))]
+       (update-proxy ~'result (style/styleable-mixin))
        ~@(map process-special-setter special-setters)
        ~'result)))
 
