@@ -25,8 +25,10 @@
      "add_category" (fn [this c] (alter cat conj c))
      "remove_category" (fn [this c] (alter cat disj c))}))
 
-;;TODO does not work!
-(defn component? [x] (instance? clarity.component.Component x))
+(defn component?
+  "Tests whether x satisfies the clarity.component.Component
+  protocol."
+  [x] (satisfies? Component x))
 
 (defn id
   "Get the identifier of the passed component. Returns nil if there is
