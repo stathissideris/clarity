@@ -1,4 +1,5 @@
 (ns clarity.list
+  (:require [clarity.component :as c])
   (:import [javax.swing AbstractListModel]))
 
 (defn immutable-list-model
@@ -50,7 +51,7 @@
     (getSize [] ((:count fmap)))
     (append [item]
       (do ((:add fmap) item)
-          (let [i (dec (count this))]
+          (let [i (dec (.getSize this))]
             (proxy-super fireIntervalAdded this i i))))
     (insert [index item]
       (do ((:insert fmap) index item)
@@ -82,6 +83,27 @@
 
 ;;(defn list-model
 
+(defn selections
+  [^javax.swing.JList lst]
+  (seq (.getSelectedValues lst)))
+
+(defn selection
+  [^javax.swing.JList lst]
+  (.getSelectedValue lst))
+
+(defn selected-indices
+  [^javax.swing.JList lst]
+  (seq (.getSelectedIndices lst)))
+
+(defn selected-index
+  [^javax.swing.JList lst]
+  (.getSelectedIndex lst))
+
+(extend-type javax.swing.JList
+  c/HasValue
+  (value [this] (list-model-seq (.getModel this)))
+  (set-value [this value] (.setModel this value)))
+
 (let [data (atom [1 2 3 4 5 6 7 8])]
     (def m
       (list-model*
@@ -89,8 +111,3 @@
         :add (fn [item] (swap! data conj item))
         :insert (fn [index item])
         :count (fn [] (count @data))})))
-
-(defmulti seq class)
-(defmethod seq javax.swing.ListModel
-  [model]
-  (list-model-seq model))
