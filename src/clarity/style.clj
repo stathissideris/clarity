@@ -1,5 +1,6 @@
 (ns clarity.style
-  (require [clojure.contrib.str-utils2 :as str2]))
+  (require [clojure.contrib.str-utils2 :as str2]
+           [clarity.structure :as s]))
 
 ;;; look and feel
 (defn set-system-laf []
@@ -145,7 +146,30 @@
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
 
-;;; applying styles
+;;; making stylesheets
 
-;;(defn apply-style [component style-forms]
-;;  (do-component component style-forms))
+(defn style
+  "Create a style that can be added to a stylesheet"
+  [matcher & look-forms]
+  {:matcher matcher
+   :look (vec look-forms)})
+
+(defn make-style-form
+  [[_ matcher & look-forms]]
+  (apply style `(s/matcher ~matcher)
+         (map vec look-forms)))
+
+(defmacro defstylesheet
+  [name & styles]
+  `(def ~name
+     (vector ~@(map make-style-form styles))))
+
+;;example syntax of a stylesheet
+#_(defstylesheet
+    test-stylesheet
+    (style (category :important)
+           (:color (color :red))
+           (:font (font :style :bold)))
+    (style (or (id :title)
+               (category :header))
+           (:font (font :size "200%"))))

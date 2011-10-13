@@ -1,6 +1,9 @@
 #_(defstylesheet
-    {:id "test stylesheet"
-     :styles
-     [{:id :bold
-       :rules [[:category :important]]
-       :look [[:text-weight bold]]}]})
+    test-stylesheet
+    (style (category :important)
+           (:color (color :red))
+           (:font (font :style :bold)))
+     
+    (style (or (id :title)
+               (category :header))
+           (:font (font :size "200%"))))
