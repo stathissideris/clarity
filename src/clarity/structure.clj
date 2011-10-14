@@ -147,6 +147,14 @@
       {::cost (apply + (map get-cost matchers))
        ::debug (into [] (map get-debug matchers))})))
 
+(defn not-matcher
+  [matcher]
+  (with-meta
+    (fn [component]
+      (not (matcher component)))
+    {::cost (get-cost matcher)
+     ::debug ["not" (get-debug matcher)]}))
+
 (defn any-matcher []
   (with-meta
     (fn [component] true)
@@ -158,22 +166,28 @@
   has a sibling that comes before it in the layout, the sibling
   matches before-m and the component itself matches this-m."
   [before-m this-m]
-  (fn [component]
-    (let [sibling (previous-sibling component)]
-      (and sibling
-           (before-m sibling)
-           (this-m component)))))
+  (with-meta
+    (fn [component]
+      (let [sibling (previous-sibling component)]
+        (and sibling
+             (before-m sibling)
+             (this-m component))))
+    {::cost (+ (get-cost before-m) (get-cost this-m))
+     ::debug ["after" (get-debug before-m) (get-debug this-m)]}))
 
 (defn before-matcher
   "Produces a matcher function that matches if the passed component
   has a sibling that comes after it in the layout, the sibling
   matches before-m and the component itself matches this-m."
   [this-m after-m]
-  (fn [component]
-    (let [sibling (next-sibling component)]
-      (and sibling
-           (this-m component)
-           (after-m sibling)))))
+  (with-meta
+    (fn [component]
+      (let [sibling (next-sibling component)]
+        (and sibling
+             (this-m component)
+             (after-m sibling))))
+    {::cost (+ (get-cost this-m) (get-cost after-m))
+     ::debug ["before" (get-debug this-m) (get-debug after-m)]}))
 
 (defn direct-parent-matcher
   "Produces a matcher function that accepts a component and tests
@@ -265,6 +279,7 @@
               '* 'clarity.structure/any-matcher
               'or 'clarity.structure/or-matcher
               'and 'clarity.structure/and-matcher
+              'not 'clarity.structure/not-matcher
               'before 'clarity.structure/before-matcher
               'after 'clarity.structure/after-matcher
               '... 'clarity.structure/...
@@ -280,6 +295,7 @@
     *         any-matcher
     or        or-matcher
     and       and-matcher
+    not       not-matcher
     before    before-matcher
     after     after-matcher
     ...       clarity.structure/...
