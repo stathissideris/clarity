@@ -148,7 +148,7 @@
            (:border nil))
  
   Creates a proxy to a Swing component that is also a
-  clarity.component.Component and a clarity.styleable.Styleable.
+  clarity.component.Component.
 
   The first parameter is either a Java class or a keyword. If a Java
   class is passed, it is used as is in the created proxy. Keywords are

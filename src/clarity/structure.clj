@@ -1,6 +1,7 @@
 (ns clarity.structure
   (:use clojure.walk)
-  (:require [clarity.component :as c]))
+  (:require [clarity.globals :as globals]
+            [clarity.component :as c]))
 
 (defn comp-seq
   "Walks the contents of the passed java.awt.Container depth-first and
@@ -382,7 +383,7 @@
   (let [replace-dollar
         (fn [f]
           (if (and (symbol? f)
-                   (.startsWith (name f) "$"))
+                   (.startsWith (name f) globals/*id-shorthand*))
             `($ ~root ~(keyword (.substring (name f) 1)))
             f))]
     `(do

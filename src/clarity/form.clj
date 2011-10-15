@@ -5,6 +5,7 @@
   (:require [clojure.string :as str]
             [clojure.contrib.miglayout :as mig]
             [clarity.component :as c]
+            [clarity.widgets :as widgets]
             [clarity.style :as style]
             [clarity.functions :as fun]
             [clarity.structure :as s]
@@ -55,7 +56,7 @@
           [:border (BorderFactory/createTitledBorder title)]))
 
 (defn- make-text [_ text & flags]
-  (let [para (apply c/para text flags)]
+  (let [para (apply widgets/para text flags)]
     (dosync (.addCategory para :text))
     (list para [:span 2])))
 

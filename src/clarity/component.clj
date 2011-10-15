@@ -5,12 +5,7 @@
   clarity.component
   (:require [clojure.string :as str]
             [clojure.contrib.str-utils2 :as str2]
-            [clarity.event :as event]
-            [clarity.style :as style])
-  (:import [clarity.style.Styleable]
-           [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
-           [javax.swing.text.html HTMLEditorKit]
-           [com.petebevin.markdown MarkdownProcessor]))
+            [clarity.event :as event]))
 
 (defprotocol Component
   (get-id [this])
@@ -50,4 +45,3 @@
 ;;the rest of the namespace has been split over the following files
 (load "component_protocols")
 (load "component_make")
-(load "component_widgets")

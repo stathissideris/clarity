@@ -1,5 +1,6 @@
 (ns clarity.style
   (require [clojure.contrib.str-utils2 :as str2]
+           [clarity.component :as c]
            [clarity.structure :as s]))
 
 ;;; look and feel
@@ -173,3 +174,13 @@
     (style (or (id :title)
                (category :header))
            (:font (font :size "200%"))))
+
+;;; applying stylesheets
+
+(defn apply-stylesheet
+  [root stylesheet]
+  (doseq [component (s/comp-seq root)]
+    (doseq [style stylesheet]
+      (if ((:matcher style) component)
+        (c/do-component component
+                        (:look style))))))
