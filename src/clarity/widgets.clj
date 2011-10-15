@@ -1,4 +1,10 @@
-(in-ns 'clarity.component)
+(ns clarity.widgets
+  (:require [clarity.component :as c]
+            [clarity.style :as style]
+            [clojure.contrib.str-utils2 :as str2])
+  (:import [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
+           [javax.swing.text.html HTMLEditorKit]
+           [com.petebevin.markdown MarkdownProcessor]))
 
 ;;; this part of the namespace wraps some Swing components to make them more
 ;;; clojure-y and implements some other components for common tasks
@@ -30,8 +36,8 @@
                   "font-size: "
                   (.getSize font)
                   "pt; }")
-        pane (doto (make :editor-pane
-                         [:init (.getContentType (HTMLEditorKit.)) text])
+        pane (doto (c/make :editor-pane
+                           [:init (.getContentType (HTMLEditorKit.)) text])
                (.setText text)
                (.setOpaque false)
                (.setBorder nil)
@@ -40,7 +46,7 @@
     pane))
 
 (defn scroll-pane [comp]
-  (make :scroll-pane comp))
+  (c/make :scroll-pane comp))
 
 (defn choose-file
   "Opens a file selection dialog and returns the absolute path of the
