@@ -274,19 +274,38 @@
                        (next matchers)
                        false))))
 
-(let [lookup {'id 'clarity.structure/id-matcher
-              'category 'clarity.structure/category-matcher
-              'type 'clarity.structure/type-matcher
-              '* 'clarity.structure/any-matcher
-              'or 'clarity.structure/or-matcher
-              'and 'clarity.structure/and-matcher
-              'not 'clarity.structure/not-matcher
-              'before 'clarity.structure/before-matcher
-              'after 'clarity.structure/after-matcher
-              '... 'clarity.structure/...
-              'path 'path-matcher*}]
-  (defmacro matcher
-    "This is a macro that makes the syntax of (path-matcher*) a bit
+(defn- expand-matcher-shorthand
+  "Converts symbols whose names match one of the following patterns:
+
+  $button.important
+  .important
+  $button
+
+  ...to forms appropriate for feeding into the (matcher) macro, like
+  so:
+
+  (and (id :button) (category :important))
+  (category :important)
+  (id :button)"
+  [symbol]
+  (if (not (symbol? symbol))
+    symbol
+    (let [s (name symbol)
+          [match id category] (re-matches #"^\$(.+)\.(.+)$" s)]
+      (if match
+        `(~'and
+          (~'id ~(keyword id))
+          (~'category ~(keyword category)))
+        (let [[match category] (re-matches #"^\.(.+)$" s)]
+          (if match
+            `(~'category ~(keyword category))
+            (let [[match id] (re-matches #"^\$(.+)$" s)]
+              (if match
+                `(~'id ~(keyword id))
+                symbol))))))))
+
+(defmacro matcher
+  "This is a macro that makes the syntax of (path-matcher*) a bit
   lighter. It makes the following replaces to the first element of all
   passed expressions:
 
@@ -324,20 +343,29 @@
 
   This will match a button whose direct parent has the :cat1 category
   and one of the ancestors of the parent has an ID of :panel1."
-    [& args]
-    (let [replace-firsts (fn replace-firsts [exp]
-                           ;;TODO replace with clojure.walk/postwalk-replace
-                           ;;TODO would be nice to have this check
-                           ;; {:pre [(if (sequential? exp)
-                           ;;          (symbol? (first exp))
-                           ;;          true)]}
-                           (if (not (sequential? exp))
-                             (if (contains? lookup exp)
-                               (get lookup exp)
-                               exp)
-                             (map replace-firsts exp)))
-          p (replace-firsts args)]
-      `(path-matcher* ~@p))))
+  [& args]
+  (let [lookup {'id 'clarity.structure/id-matcher
+                'category 'clarity.structure/category-matcher
+                'type 'clarity.structure/type-matcher
+                '* 'clarity.structure/any-matcher
+                'or 'clarity.structure/or-matcher
+                'and 'clarity.structure/and-matcher
+                'not 'clarity.structure/not-matcher
+                'before 'clarity.structure/before-matcher
+                'after 'clarity.structure/after-matcher
+                '... 'clarity.structure/...
+                'path 'path-matcher*}
+        
+        replace-first
+        (fn [x]
+          (if (sequential? x)
+            (if (contains? lookup (first x))
+              (conj (drop 1 x) (get lookup (first x))) x) x))
+        
+        p (postwalk
+           replace-first
+           (postwalk expand-matcher-shorthand args))]
+    `(path-matcher* ~@p)))
 
 (defn select
   "Filter root and the component tree below it and return all the
