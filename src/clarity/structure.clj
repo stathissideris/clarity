@@ -363,28 +363,65 @@
      `($ (last frames) ~@matchers)))
 
 (defmacro with-component
-  "Macro for doing a lot of stuff to components with IDs within
-  root. In the passed forms, it replaces all the symbols starting with
-  \"$\" - for example $symbol - with calls to ($ root :symbol), and
-  wraps forms in a do statement. For example:
+  "Macro for \"wiring\" components with IDs within root. In the passed
+  forms, all symbols that start with a $ sign are converted into the
+  equivalent keywords, which are then used to look up children of the
+  root by ID, and the results are bound to variables within a let. All
+  occurrences of the dollar-symbols are then replaced by the
+  variables.
 
-  (with-component panel
-    (set-value $slider 10) 
-    (do-component $button
-	  (:on-click (.setText $label \"lalala\"))))
+  For example, if you have a panel with 2 components (ignore the
+  absent layout):
 
-  ...expands to:
+    (def panel
+      (make :panel
+            (.add (make :button \"button\" (:id :button)))
+            (.add (make :text-field (:id :text))))    
 
-  (do
-    (set-value ($ panel :slider) 10)
-    (do-component ($ panel :button)
-      (:on-click (.setText ($ panel :label) \"lalala\"))))"
+  You can then say:
+
+    (with-component panel
+      (do-component $button
+                    (:on-mouse-over (.setText $text \"over\"))
+                    (:on-mouse-out (.setText $text \"out\"))))
+
+  Which (approximately) expands to:
+
+    (let*
+     [comp18079 (clarity.structure/find-by-id f :button)
+      comp18080 (clarity.structure/find-by-id f :text)]
+     (do-component comp18079
+      (:on-mouse-over (.setText comp18080 \"over\"))
+      (:on-mouse-out (.setText comp18080 \"out\"))))
+
+  (The exact variable names may differ, as they are generated to be
+  unique depending on the context).
+
+  It is possible to make this macro use a different prefix for the IDs
+  by re-binding clarity.globals/*id-shorthand*."
   [root & forms]
-  (let [replace-dollar
-        (fn [f]
-          (if (and (symbol? f)
-                   (.startsWith (name f) globals/*id-shorthand*))
-            `($ ~root ~(keyword (.substring (name f) 1)))
-            f))]
-    `(do
-       ~@(map #(postwalk replace-dollar %) forms))))
+  (let [dollar?
+        (fn [x] (and (symbol? x)
+                     (.startsWith (name x) globals/*id-shorthand*)))
+        
+        collect-dollars
+        (fn [f] (filter dollar? (flatten f)))
+        
+        dollars
+        (into #{} (flatten (map #(collect-dollars %) forms)))
+        
+        dollars-to-symbols
+        (into {} (map (fn [x] [x (gensym "comp")]) dollars))
+
+        bindings
+        (apply concat (map (fn [[n s]]
+                             [s `(clarity.structure/find-by-id
+                                  ~root
+                                  ~(keyword (.substring (name n) 1)))])
+                           dollars-to-symbols))
+        
+        forms
+        (postwalk (fn [x] (if (dollar? x)
+                            (x dollars-to-symbols) x)) forms)]
+        
+    `(let [~@bindings] ~@forms)))

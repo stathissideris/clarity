@@ -6,6 +6,7 @@
       :author "Stathis Sideris"}
   clarity.dev
   (:require [clarity.component :as c]
+            [clarity.widgets :as w]
             [clarity.style :as style]
             [clarity.util :as util]
             [clojure.contrib.swing-utils :as swing]
@@ -106,7 +107,7 @@
                                 (:init 0.5 0.2 nil 0.2)))
                  (:id :delay-spinner))
          (c/make :label "sec") :wrap
-         (c/scroll-pane
+         (w/scroll-pane
           (c/make :panel
                   (:id :main-panel)
                   (:background (style/color :black))))
