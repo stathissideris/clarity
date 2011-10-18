@@ -288,7 +288,7 @@
   (category :important)
   (id :button)"
   [symbol]
-  (if (not (symbol? symbol))
+  (if (or (not (symbol? symbol)) (= '... symbol))
     symbol
     (let [s (name symbol)
           [match id category] (re-matches #"^\$(.+)\.(.+)$" s)]
