@@ -18,6 +18,24 @@
 (def group-flags #{})
 (def text-flags #{:rich})
 
+(style/defstylesheet
+  clarity-form-stylesheet
+  (style (or .header .header-1)
+         (:font (style/font :size "x1.6" :style :bold)))
+  (style .header-2
+         (:font (style/font :size "x1.35" :style :bold)))
+  (style .header-3
+         (:font (style/font :size "x1.2" :style [:bold :italic])))
+  (style .header-4
+         (:font (style/font :size "x1.1" :style [:bold :italic]))))
+
+;;try this to preview the styles:
+#_(clarity.dev/show-comp
+   (form [:header "Header 1"]
+         [:header "Header 2" :level 2]
+         [:header "Header 3" :level 3]
+         [:header "Header 4" :level 4]))
+
 (defn- interpose-every [every sep coll]
   (let [piece (fn piece [sep coll every]
                 (when (and coll (not (empty? coll)))
@@ -46,8 +64,7 @@
    (c/do-component
     (if level
       (c/make :label s [:category (keyword (str "header-" level))])
-      (c/make :label s [:category :header]))
-    (:font (style/font :size "x1.5" :style :bold)))
+      (c/make :label s [:category :header])))
    [:span 2]))
 
 ;;TODO under development
@@ -130,11 +147,16 @@
           (make-field token)
           :sg))) ;;to achieve equal heights
 
-(defn- make-form-panel [mig-params]
-  (apply mig/miglayout (c/make :panel (:category :form))
-         :layout "wrap 2"
-         :column "[left][grow,fill]"
-         mig-params))
+(defn make-form-panel [mig-params]
+  (let [panel
+        (apply mig/miglayout (c/make :panel (:category :form))
+               :layout "wrap 2"
+               :column "[left][grow,fill]"
+               mig-params)]
+    #_(println panel)
+    #_(println clarity-form-stylesheet)
+    (style/apply-stylesheet panel clarity-form-stylesheet)
+    panel))
 
 (defn- params-to-mig-params [params]
   (reduce concat
@@ -220,7 +242,10 @@
   the :field category, and their labels the :label category. Headers
   are assigned the :header category or :header-X where X is the level
   that was passed with the :level flag while constructing the
-  form. Text paragraphs are assigned the :text category."
+  form. Text paragraphs are assigned the :text category.
+
+  The clarity.form/clarity-form-stylesheet is applied to the form
+  panel before it's returned."
 
   [& components]
   

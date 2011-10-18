@@ -1,7 +1,8 @@
 (ns clarity.style
   (require [clojure.contrib.str-utils2 :as str2]
            [clarity.component :as c]
-           [clarity.structure :as s]))
+           [clarity.structure :as s])
+  (use clojure.contrib.apply-macro))
 
 ;;; look and feel
 (defn set-system-laf []
@@ -149,38 +150,62 @@
 
 ;;; making stylesheets
 
-(defn style
-  "Create a style that can be added to a stylesheet"
-  [matcher & look-forms]
-  {:matcher matcher
-   :look (vec look-forms)})
-
-(defn make-style-form
+(defn- make-style-form
   [[_ matcher & look-forms]]
-  (apply style `(s/matcher ~matcher)
-         (map vec look-forms)))
+  {:matcher `(s/matcher ~matcher)
+   :mutator `(c/make-component-mutator ~@look-forms)})
 
 (defmacro defstylesheet
+  "Defines a stylesheet. The syntax is:
+
+  (defstylesheet
+    stylesheet-name
+    (style matcher & mutator-forms)
+    (style matcher & mutator-forms))
+
+  Where the matchers are defined using the same syntax as the forms
+  passed to the clarity.structure/matcher macro. The mutator forms
+  follow the syntax of clarity.structure/do-component. Here is a more
+  concrete example:
+
+  (defstylesheet
+    test-stylesheet
+    (style .important
+           (:color (color :red))
+           (:font (font :style :bold)))
+    (style $title.header
+           (:font (font :size \"200%\"))))
+
+  The name is def-ed as a Var in the current namespace. The name is
+  also added as a string to the metadata of the stylesheet."
   [name & styles]
   `(def ~name
-     (vector ~@(map make-style-form styles))))
+     (with-meta
+       (vector ~@(map make-style-form styles))
+       {:name ~(str name)})))
 
 ;;example syntax of a stylesheet
 #_(defstylesheet
     test-stylesheet
-    (style (category :important)
+    (style .important
            (:color (color :red))
            (:font (font :style :bold)))
-    (style (or (id :title)
-               (category :header))
+    (style $title.header
            (:font (font :size "200%"))))
 
 ;;; applying stylesheets
-
 (defn apply-stylesheet
+  "Applies a stylesheet to the root component. The component and its
+  descendants are each tested against the rules of the stylesheet, and
+  any matches have the corresponding look apply.
+
+  Please note: re-applying a stylesheet on a component that already
+  has one, may have unpredictable results, since clarity does not
+  attempt to reverse the side-effects of the previous stylesheet
+  before applying the new one. This is especially important if your
+  stylesheets add listeners to the matching components."
   [root stylesheet]
   (doseq [component (s/comp-seq root)]
     (doseq [style stylesheet]
       (if ((:matcher style) component)
-        (c/do-component component
-                        (:look style))))))
+        ((:mutator style) component)))))
