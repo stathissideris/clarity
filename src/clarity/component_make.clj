@@ -53,6 +53,21 @@
   `(~(event/listener-keyword-to-adder key)
     (event/listener ~key ~@handler-forms)))
 
+(defmacro make-component-mutator
+  [& expressions]
+  (let [{:keys [event-forms
+                setter-forms]} (parse-component-params (conj expressions :dummy))
+                event-forms (group-by event-form-listener event-forms)]
+    `(fn [~'this]
+       (~'doto ~'this
+         ~@(map (fn [exp]
+                  (conj
+                   (drop 1 exp)
+                   (if (keyword? (first exp))
+                     (make-setter-name (name (first exp)))
+                     (first exp)))) setter-forms)
+         ~@(map process-event-form event-forms)))))
+
 (defmacro do-component
   "This macro is similar to clojure.core/doto, and in fact it supports
   an identical syntax. If an expression starts with a keyword, the
@@ -87,18 +102,7 @@
   The expressions can be lists or vectors, either will work."
   
   [component & expressions]
-  (let [{:keys [event-forms
-                setter-forms]} (parse-component-params (conj expressions :dummy))
-                event-forms (group-by event-form-listener event-forms)]
-    `(let [~'this ~component]
-       (~'doto ~'this
-         ~@(map (fn [exp]
-                  (conj
-                   (drop 1 exp)
-                   (if (keyword? (first exp))
-                     (make-setter-name (name (first exp)))
-                     (first exp)))) setter-forms)
-         ~@(map process-event-form event-forms)))))
+  `((make-component-mutator ~@expressions) ~component))
 
 (defn make-class-name [component]
   (let [name (name component)
