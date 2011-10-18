@@ -133,7 +133,7 @@
     (fn [component]
       (every? #(= % true) (map #(% component) matchers)))
     {::cost (apply + (map get-cost matchers))
-     ::debug (into [] (map get-debug matchers))}))
+     ::debug (into ["and"] (map get-debug matchers))}))
 
 (defn or-matcher
   [& matchers]
@@ -146,7 +146,7 @@
                    (recur (next ms)))
               false)))
       {::cost (apply + (map get-cost matchers))
-       ::debug (into [] (map get-debug matchers))})))
+       ::debug (into ["or"] (map get-debug matchers))})))
 
 (defn not-matcher
   [matcher]
