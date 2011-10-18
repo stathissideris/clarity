@@ -54,6 +54,9 @@
     (event/listener ~key ~@handler-forms)))
 
 (defmacro make-component-mutator
+  "Generates a function with one parameter which should be a
+  component. When the function is invoked, the expressions are called
+  on the component, using the same syntax as (do-component)."
   [& expressions]
   (let [{:keys [event-forms
                 setter-forms]} (parse-component-params (conj expressions :dummy))
