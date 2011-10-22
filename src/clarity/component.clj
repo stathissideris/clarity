@@ -4,7 +4,6 @@
       :author "Stathis Sideris"}
   clarity.component
   (:require [clojure.string :as str]
-            [clojure.contrib.str-utils2 :as str2]
             [clarity.event :as event]))
 
 (defprotocol Component
