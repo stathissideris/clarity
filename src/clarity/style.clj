@@ -3,7 +3,10 @@
            [clarity.component :as c]
            [clarity.structure :as s])
   (use clojure.contrib.apply-macro)
-  (import [java.awt Paint Stroke BasicStroke]
+  (import [java.awt Color Paint Stroke BasicStroke GradientPaint
+           LinearGradientPaint RadialGradientPaint
+           MultipleGradientPaint]
+          [java.awt.geom Point2D$Float Point2D$Double]
           [javax.swing.border AbstractBorder]))
 
 ;;; look and feel
@@ -128,6 +131,15 @@
 ;;; color
 
 (defn color
+  "Create a java.awt.Color. The single-parameter form accepts either
+  keywords which it then maps to the static pre-defined colors (so you
+  can say things like (color :white)) or numbers, so that you can pass
+  a color as a hexadecimal.
+
+  The other two versions for RGB and RGBA colors either accept
+  integers from 0 to 255 or floats from 0 to 1. You cannot mix the
+  two."
+  
   ([c]
      (if (keyword? c)
        (eval `(. java.awt.Color ~(symbol (name c))))
@@ -149,6 +161,13 @@
             (min 255 (+ (.getAlpha c1) (.getAlpha c2)))))
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
+
+;;; geometry
+
+(defn point-float [x y] (Point2D$Float. x y))
+(defn point-double [x y] (Point2D$Double. x y))
+
+(def point point-float)
 
 ;;; borders
 
@@ -241,7 +260,30 @@
                 :round java.awt.BasicStroke/JOIN_ROUND
                 :bevel java.awt.BasicStroke/JOIN_BEVEL}]
   (defn stroke
-    "Creates a basic stroke." ;;TODO more documentation
+    "Creates a basic stroke (java.awt.BasicStroke). The first
+  parameter is the width of the stroke, and it can be customised by
+  passing a number of extra key/value pairs.
+
+  The cap of the stroke can be defined by passing :cap
+  and :butt, :round or :square (default is :round).
+
+  The join of stroke can be defined by passing :join
+  and :miter, :round or :bevel (default is :round).
+
+  The dash pattern can be defined by passing :dash and a vector of
+  numbers. Finally, the dash phase can be defined by
+  passing :dash-phase and a number.
+
+  Examples:
+
+  (stroke 2)
+
+  (stroke 3 :join :miter)
+
+  (stroke 3, :join :round, :cap :square)
+
+  (stroke 5 :dash [10 20 5])"
+
     [width
      & {:keys [cap join miter-limit dash dash-phase]
         :or {cap :round
@@ -253,6 +295,125 @@
           join (if join (get join-map join) nil)
           dash (if dash (into-array Float/TYPE dash) nil)]
       (BasicStroke. width cap join miter-limit dash dash-phase))))
+
+;; gradients
+
+(defn gradient
+  [[x1 y1] c1, [x2 y2] c2 & cyclic?]
+  (let [cyclic? (if cyclic? true false)]
+    (GradientPaint. x1 y1 c1, x2 y2 c2, cyclic?)))
+
+;;example
+#_(gradient [10 10] (color :white)
+            [20 20] (color :black)
+            :cyclic)
+
+(let [cycle-method-map
+      {:no-cycle java.awt.MultipleGradientPaint$CycleMethod/NO_CYCLE
+       :repeat java.awt.MultipleGradientPaint$CycleMethod/REPEAT
+       :reflect java.awt.MultipleGradientPaint$CycleMethod/REFLECT}]
+
+  (defn- parse-gradient-stops [stops]
+    (loop [s stops
+           fractions []
+           colors []]
+
+      (if (or (empty? s) (keyword? (first s)))
+        {:fractions (into-array Float/TYPE fractions)
+         :colors (into-array java.awt.Color colors)
+         :cycle-method (if (first s) (first s) :no-cycle)}
+        (if (not (number? (first s)))
+          (throw (IllegalArgumentException.
+                  (str "Expected number instead of " (first s))))
+          (if (not (instance? java.awt.Color (second s)))
+            (throw (IllegalArgumentException.
+                    (str "Expected color instead of " (second s))))
+            (recur (drop 2 s)
+                   (conj fractions (float (first s)))
+                   (conj colors (second s))))))))
+            
+  (defn linear-gradient
+    "Construct a linear gradient with multiple stops
+  (java.awt.LinearGradientPaint). The first two vectors define the
+  start and end points of the gradient. The rest of the parameters
+  define the stops of the gradient as pairs of numbers (between 0 and
+  1) and colors. Optionally, as a last parameter you can pass a
+  keyword defining the cycle method of the gradient (:no-cycle,
+  :repeat or :reflect, with :no-cycle being the default).
+
+  Example:
+
+  (linear-gradient [10 10]
+                   [100 10]
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+		           0.9 (color :black))"
+    
+    [[x1 y1] [x2 y2] & stops]
+    {:pre [(>= (count stops) 4)]}
+    (let [params (parse-gradient-stops stops)]
+      (LinearGradientPaint.
+       (point x1 y1)
+       (point x2 y2)
+       (:fractions params)
+       (:colors params)
+       (get cycle-method-map (:cycle-method params)))))
+
+  (defn radial-gradient
+    "Construct a radial gradient with multiple stops
+  (java.awt.RadialGradientPaint). The first vector parameter defines
+  the center of the gradient and the second is the radius. If the
+  third parameter is also a 2-element vector, it defines an off-center
+  focus point for the gradient.
+
+  The rest of the parameters define the stops of the gradient as pairs
+  of numbers (between 0 and 1) and colors. Optionally, as a last
+  parameter you can pass a keyword defining the cycle method of the
+  gradient (:no-cycle, :repeat or :reflect, with :no-cycle being the
+  default).
+
+  Example without a custom focus point:
+
+  (radial-gradient [10 10] 100
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+                   0.9 (color :black))
+
+  Example with a custom focus point:
+
+  (radial-gradient [10 10] 100 [0 0]
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+                   0.9 (color :black))"
+
+    [[cx cy] radius & stops]
+    (let [focus
+          (if (vector? (first stops))
+            (apply point (first stops))
+            nil)
+          
+          params
+          (if focus
+            (parse-gradient-stops (rest stops))
+            (parse-gradient-stops stops))]
+      (if focus
+        (RadialGradientPaint. ;;with off-center focus
+         (point cx cy)
+         (float radius)
+         focus
+         (:fractions params)
+         (:colors params)
+         (get cycle-method-map (:cycle-method params)))
+        (RadialGradientPaint. ;;no off-center focus
+         (point cx cy)
+         (float radius)
+         (:fractions params)
+         (:colors params)
+         (get cycle-method-map (:cycle-method params)))))))
+
 
 ;;; making stylesheets
 
