@@ -2,7 +2,9 @@
   (require [clojure.contrib.str-utils2 :as str2]
            [clarity.component :as c]
            [clarity.structure :as s])
-  (use clojure.contrib.apply-macro))
+  (use clojure.contrib.apply-macro)
+  (import [java.awt Paint Stroke BasicStroke]
+          [javax.swing.border AbstractBorder]))
 
 ;;; look and feel
 (defn set-system-laf []
@@ -147,6 +149,110 @@
             (min 255 (+ (.getAlpha c1) (.getAlpha c2)))))
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
+
+;;; borders
+
+(defprotocol Border
+  "Protocol to be implemented by borders that can tell you what shape
+  they are."
+  (shape [this component]))
+
+(defn install-border
+  "Set the border as the border of the component and if the border is
+  a clarity.style.Border, modify the component proxy mapping of the
+  paintComponent function to draw the background of the component
+  clipped using the shape of the border. Sets the opaque flag of the
+  component to false to prevent the background being painted
+  twice. Assumes that component is a proxy."
+  
+  [^clarity.component.Component component
+   ^AbstractBorder border]
+  
+  (.setBorder component border)
+  (when (satisfies? Border border)
+    (.setOpaque component false)
+    (update-proxy component
+                  {"paintComponent"
+                   (fn [this g]
+                     (let [p (.getPaint g)
+                           b (.getBorder this)]
+                       (when (satisfies? Border b)
+                         (.setPaint g (.getBackground this))
+                         (.fill g (shape b this))
+                         (.setPaint g p))
+                       (proxy-super paintComponent g)))})))
+
+(defn rounded-border
+  "Create a rounded border with the passed corner size in pixels, the
+  paint instance (which can be just a color) to use to draw the
+  border, and the stroke instance that defines the line. Since this is
+  a clarity.style.Border, for an opaque component it must be installed
+  on it using (install-border) to ensure that the component's
+  background is painted correctly."
+  
+  [corner-size ^Paint paint ^Stroke stroke]
+  
+  (let [arc (* 2 corner-size)]
+    (proxy [AbstractBorder clarity.style.Border] []
+      (shape [component]
+        (let [line-width (.getLineWidth stroke)
+              x (.getX component)
+              y (.getY component)
+              w (.getWidth component)
+              h (.getHeight component)]
+          (java.awt.geom.RoundRectangle2D$Float.
+           line-width
+           line-width
+           (- w (* 2 line-width))
+           (- h (* 2 line-width))
+           arc arc)))
+      (getBorderInsets [component]
+        (let [inset (+ (/ arc 2)
+                       (/ (.getLineWidth stroke) 2))]
+          (java.awt.Insets. inset inset inset inset)))
+      (paintBorder [component g x y w h]
+        (let [rect (shape this component)]
+          (doto g
+            (.setRenderingHint java.awt.RenderingHints/KEY_ANTIALIASING
+                               java.awt.RenderingHints/VALUE_ANTIALIAS_ON)
+            (.setPaint paint)
+            (.setStroke stroke)
+            (.draw rect)))))))
+
+;;to try the rounded corners border:
+#_(use 'clarity.dev 'clarity.style 'clarity.component)
+#_(show-comp
+   (make :panel
+         (.add
+          (make :panel
+                (install-border (rounded-border
+                                 25
+                                 (color :black)
+                                 (stroke 1)))
+                (:background (color :whißte))
+                (.add (make :label "Hello World! Borderz!!!"))))))
+
+;;stroke
+
+(let [cap-map {:butt java.awt.BasicStroke/CAP_BUTT
+               :round java.awt.BasicStroke/CAP_ROUND
+               :square java.awt.BasicStroke/CAP_SQUARE}
+      join-map {:miter java.awt.BasicStroke/JOIN_MITER
+                :round java.awt.BasicStroke/JOIN_ROUND
+                :bevel java.awt.BasicStroke/JOIN_BEVEL}]
+  (defn stroke
+    "Creates a basic stroke." ;;TODO more documentation
+    [width
+     & {:keys [cap join miter-limit dash dash-phase]
+        :or {cap :round
+             join :round
+             miter-limit 10.0
+             dash nil
+             dash-phase 0}}]
+    (let [cap (if cap (get cap-map cap) nil)
+          join (if join (get join-map join) nil)
+          dash (if dash (into-array Float/TYPE dash) nil)]
+      (BasicStroke. width cap join miter-limit dash dash-phase))))
 
 ;;; making stylesheets
 
