@@ -9,7 +9,7 @@
 (def the-form (form/form
                :first-name ""
                :surname ""
-               :gender ["Male" "Female"]
+               :gender ["Male" "Female" "Other"]
                :employed false))
 
 (def back-map
