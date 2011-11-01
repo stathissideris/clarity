@@ -2,8 +2,8 @@
   :description "Clojure GUI library, based on Swing."
   :autodoc {:name "Clarity"
             :page-title "Clarity API docs"
-            :web-src-dir "https://github.com/myfreeweb/ringfinger/blob/"
-            :web-home "http://myfreeweb.github.com/ringfinger/"
+            :web-src-dir "https://github.com/stathissideris/clarity/blob/"
+            :web-home "http://stathissideris.github.com/clarity/"
             :output-path "autodoc"
             :trim-prefix "clarity."
             :namespaces-to-document ["clarity"]
