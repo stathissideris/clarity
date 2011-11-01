@@ -6,8 +6,8 @@
             :web-home "http://stathissideris.github.com/clarity/"
             :output-path "autodoc"
             :trim-prefix "clarity."
-            :namespaces-to-document ["clarity"]
-            :load-except-list [#"test/" #"project\.clj" #"autodoc/"]}
+            :namespaces-to-document "clarity"
+            :load-except-list [#"test/" #"project\.clj" #"autodoc/" #"src/examples/"]}
   :dependencies [[org.clojure/clojure "1.2.0"]
 				         [org.clojure/clojure-contrib "1.2.0"]
                  [org.clojars.nakkaya/miglayout "3.7.3.1"]
