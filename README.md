@@ -15,6 +15,6 @@ Example of the form facilities:
            [:text "Please fill in the **entire** form." :rich]
            :first-name ""
            :surname ""
-           :gender ["male" "female"])
+           :gender ["male" "female" "other"])
      ["OK" "Cancel"])
 `````
