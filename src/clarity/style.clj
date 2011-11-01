@@ -451,15 +451,6 @@
        (vector ~@(map make-style-form styles))
        {:name ~(str name)})))
 
-;;example syntax of a stylesheet
-#_(defstylesheet
-    test-stylesheet
-    (style .important
-           (:color (color :red))
-           (:font (font :style :bold)))
-    (style $title.header
-           (:font (font :size "200%"))))
-
 ;;; applying stylesheets
 (defn apply-stylesheet
   "Applies a stylesheet to the root component. The component and its
