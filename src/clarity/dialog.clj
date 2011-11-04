@@ -70,7 +70,7 @@
          (or (vector? buttons)
              (map? buttons))]}
   (if (c/component? content)
-    (dosync (.addCategory content :dialog-content-panel)))
+    (dosync (c/add-category content :dialog-content-panel)))
   (let [dialog (c/make :dialog [:category :dialog])]
     (doto dialog
       (.setLayout (BorderLayout.))
