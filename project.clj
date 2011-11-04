@@ -6,7 +6,7 @@
             :web-home "http://stathissideris.github.com/clarity/"
             :output-path "autodoc"
             :trim-prefix "clarity."
-            :namespaces-to-document "clarity"
+            :copyright "Copyright 2011 by Stathis Sideris"
             :load-except-list [#"test/" #"project\.clj" #"autodoc/" #"src/examples/"]}
   :dependencies [[org.clojure/clojure "1.2.0"]
 				         [org.clojure/clojure-contrib "1.2.0"]

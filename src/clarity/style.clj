@@ -1,4 +1,11 @@
-(ns clarity.style
+(ns
+    ^{:doc "Various functions concerning the look of the
+    GUI. Currently covers fonts, colors, gradients, some border
+    functionality, and defining and applying stylesheets."
+      :author "Stathis Sideris"}
+
+  clarity.style
+
   (require [clojure.contrib.str-utils2 :as str2]
            [clarity.component :as c]
            [clarity.structure :as s])
