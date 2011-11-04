@@ -69,7 +69,7 @@
   {:pre [(instance? java.awt.Component content)
          (or (vector? buttons)
              (map? buttons))]}
-  (if (instance? clarity.style.Styleable content)
+  (if (c/component? content)
     (dosync (.addCategory content :dialog-content-panel)))
   (let [dialog (c/make :dialog [:category :dialog])]
     (doto dialog
