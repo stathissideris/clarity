@@ -1,8 +1,6 @@
 (ns clarity.style
-  (require [clojure.contrib.str-utils2 :as str2]
-           [clarity.component :as c]
+  (require [clarity.component :as c]
            [clarity.structure :as s])
-  (use clojure.contrib.apply-macro)
   (import [java.awt Paint Stroke BasicStroke]
           [javax.swing.border AbstractBorder]))
 

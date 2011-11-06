@@ -3,7 +3,7 @@
       :author "Stathis Sideris"}
   clarity.form
   (:require [clojure.string :as str]
-            [clojure.contrib.miglayout :as mig]
+            [artem.miglayout :as mig]
             [clarity.component :as c]
             [clarity.widgets :as widgets]
             [clarity.style :as style]

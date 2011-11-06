@@ -1,6 +1,5 @@
 (ns clarity.core
-  (:require [clojure.contrib.pprint :as pp]
-            [clojure.string :as str]
+  (:require [clojure.string :as str]
             [clarity.chain :as chain]
             [clarity.document :as doc]
             [clarity.renderer :as render]

@@ -1,7 +1,7 @@
 (ns clarity.widgets
   (:require [clarity.component :as c]
             [clarity.style :as style]
-            [clojure.contrib.str-utils2 :as str2])
+            [clojure.string :as str])
   (:import [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
            [javax.swing.text.html HTMLEditorKit]
            [com.petebevin.markdown MarkdownProcessor]))
@@ -26,7 +26,7 @@
   (let [font (style/get-laf-property "Label.font")
         rich? (some #{:rich} flags)
         text (if rich?
-               (str2/replace
+               (str/replace
                 (.markdown (MarkdownProcessor.) s)
                 "\n" "<br>")
                s)

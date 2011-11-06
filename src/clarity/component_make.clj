@@ -129,8 +129,7 @@
 (defmacro make-component [component
                           const-params
                           special-setters]
-  {:pre [(sequential? const-params)
-         (map? special-setters)]}
+  
   (let [clazz (if (keyword? component)
                 (symbol (make-class-name component))
                 component)
