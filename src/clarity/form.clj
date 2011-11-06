@@ -74,7 +74,7 @@
 
 (defn- make-text [_ text & flags]
   (let [para (apply widgets/para text flags)]
-    (dosync (.addCategory para :text))
+    (dosync (c/add-category para :text))
     (list para [:span 2])))
 
 (defn- handle-special-tag [tag]
