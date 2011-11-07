@@ -19,12 +19,18 @@
 
 (defn show-comp
   "Show the passed component in a JFrame."
-  [comp]
-  (doto (JFrame.)
-    (.add comp)
-    (.pack)
-    (.setVisible true)))
-
+  [comp & {on-top :on-top
+           :or {on-top false}}]
+  (if (nil? comp)
+    (throw (IllegalArgumentException.
+            "nil component passed to clarity.dev.show-comp"))
+    (c/do-component
+     (JFrame.)
+     (.add comp)
+     (.pack)
+     (:visible true)
+     (:always-on-top on-top))))
+  
 (defn- error-image [msg]
   (let [i (BufferedImage. 600 300 BufferedImage/TYPE_INT_RGB)
         g (.getGraphics i)
