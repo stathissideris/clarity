@@ -6,7 +6,7 @@
 
   clarity.style
 
-  (require [clojure.contrib.str-utils2 :as str2]
+  (require [clojure.java.io :as io]
            [clarity.component :as c]
            [clarity.structure :as s])
   (use clojure.contrib.apply-macro)
@@ -54,6 +54,10 @@
                     :monospaced java.awt.Font/MONOSPACED
                     :sans java.awt.Font/SANS_SERIF
                     :sans-serif java.awt.Font/SANS_SERIF})
+
+(def font-formats {:truetype java.awt.Font/TRUETYPE_FONT
+                   :tt java.awt.Font/TRUETYPE_FONT
+                   :type1 java.awt.Font/TYPE1_FONT})
 
 ;;; sizes
 
@@ -104,6 +108,31 @@
            (derive-size (.getSize f) size-spec)
            size-spec)))
 
+(defn derive-font
+  "Given a font, derive a new font, by making subsequent calls to the
+  various java.awt.Font/deriveFont methods depending on the presence
+  and the values of the various parameters. All parameters are
+  optional."
+  ;;TODO add support for derive-size-like size definitions
+  [^java.awt.Font f &{style :style size :size transform :transform}]
+  (let [f (if size (.deriveFont f (float size)) f)
+        f (if style (.deriveFont f (get font-styles style)) f)
+        f (if transform (.deriveFont f transform) f)]
+    f))
+
+(defn font-from-file
+  "Create a Font from a file. The format parameter can be :tt
+  or :truetype to load TrueType fonts, or :type1 for Type1 fonts. The
+  file argument is passed to clojure.java.io/file, so it is coerced
+  into a file and therefore can be a String, a File, or a URL/URI
+  pointing to a file. The resulting font has the same size as the
+  default-font."
+  [format file]
+  (let [format (get font-formats format)]
+    (derive-font
+     (java.awt.Font/createFont format (io/file file))
+     :size (.getSize default-font))))
+
 (defn font
   "Constructs a font out of three optional named parameters, :name
   :size :style. The name can be any valid font name, or a keyword
@@ -112,6 +141,7 @@
   can be :plain :bold :italic or a vector containing :bold
   and :italic."
   [&{name :name style :style size :size
+     file :file format :format
      :or {style (.getStyle default-font)
           size (.getSize default-font)}}]
   (let [the-style (interpret-font-style style)
@@ -120,20 +150,11 @@
                    name)
         size (if (string? size) (derive-font-size default-font size)
                  size)]
-    (java.awt.Font. the-name the-style size)))
-
-(defn derive-font
-  "Given a font, derive a new font, by overwriting its parameters with
-  the passed ones. The parameters are the same as the (font) function,
-  but the size can be derived by passing a size-spec as in
-  the (derive-size) function."
-  [^java.awt.Font f &{name :name style :style size :size
-       :or {name (.getName f)
-            style (.getStyle f)
-            size (.getSize f)}}]
-  (font :name name
-        :style style
-        :size (derive-font-size f size)))
+    (cond file (derive-font
+                (font-from-file format file)
+                :size size
+                :style style)
+          :else (java.awt.Font. the-name the-style size))))
 
 ;;; color
 
