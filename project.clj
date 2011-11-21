@@ -9,8 +9,8 @@
             :copyright "Copyright 2011 by Stathis Sideris"
             :load-except-list [#"test/" #"project\.clj" #"autodoc/" #"src/examples/"]}
   :dependencies [[org.clojure/clojure "1.2.0"]
-				         [org.clojure/clojure-contrib "1.2.0"]
-                 [org.clojars.nakkaya/miglayout "3.7.3.1"]
+                 [org.clojure/clojure-contrib "1.2.0"]
+                 [artem "0.5"]
                  [org.markdownj/markdownj "0.3.0-1.0.2b4"]]
   :dev-dependencies [[lein-clojars "0.6.0"]
                      [org.clojars.weavejester/autodoc "0.9.0"]]

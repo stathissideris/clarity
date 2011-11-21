@@ -3,7 +3,7 @@
       :author "Stathis Sideris"}
   clarity.form
   (:require [clojure.string :as str]
-            [clojure.contrib.miglayout :as mig]
+            [clarity.layout :as layout]
             [clarity.component :as c]
             [clarity.widgets :as widgets]
             [clarity.style :as style]
@@ -149,7 +149,7 @@
 
 (defn make-form-panel [mig-params]
   (let [panel
-        (apply mig/miglayout (c/make :panel (:category :form))
+        (apply layout/mig (c/make :panel (:category :form))
                :layout "wrap 2"
                :column "[left][grow,fill]"
                mig-params)]

@@ -1,6 +1,9 @@
-(ns clarity.layout)
+(ns clarity.layout
+  (:require [artem.miglayout :as artem]))
 
-(defmacro grid-bag-layout
+(def mig artem/miglayout)
+
+(defmacro grid-bag
   "This macro was developed by Stuart Sierra and was first published
   here: http://stuartsierra.com/2010/01/05/taming-the-gridbaglayout
 
