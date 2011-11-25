@@ -12,7 +12,8 @@
             [clojure.contrib.swing-utils :as swing]
             [clojure.contrib.miglayout :as mig])
   (:use [clarity.structure :only [$]])
-  (:import [javax.swing UIManager JFrame ImageIcon]
+  (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
+           [java.awt Frame MouseInfo]
            [java.awt.image BufferedImage]))
 
 (def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
@@ -244,7 +245,39 @@
 #_(send p start-action)
 #_(send p stop-action)
 
+(defn all-frames
+  "Get all open frames."
+  []
+  (Frame/getFrames))
 
+(defn frame-titles
+  "Get the titles of all open frames."
+  []
+  (map #(.getTitle %) (all-frames)))
+
+(defn mouse-location
+  "Get the location of the mouse on the screen."
+  []
+  (.getLocation (MouseInfo/getPointerInfo)))
+
+(defn point-from-screen
+  "Convert a screen point to a point relative to the top-left corner
+  of the component."
+  [p component]
+  (let [p (mouse-location)]
+    (SwingUtilities/convertPointFromScreen p component)
+    p))
+
+(defn component-at-screen-point
+  "Returns the deepest component at the screen point p."
+  [p component]
+  (.findComponentAt component (point-from-screen p component)))
+
+(defn component-at-mouse
+  "Returns the deepest component at the position of the mouse,
+  contained within container."
+  [container]
+  (component-at-screen-point (mouse-location) container))
 
 (defn dispose-all-frames
   "Call .dispose on all frames."
