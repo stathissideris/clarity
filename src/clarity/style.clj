@@ -133,6 +133,11 @@
      (java.awt.Font/createFont format (io/file file))
      :size (.getSize default-font))))
 
+(defn font-from-resource
+  [format resource]
+  (let [format (get font-formats format)])
+  )
+
 (defn font
   "Constructs a font out of three optional named parameters, :name
   :size :style. The name can be any valid font name, or a keyword
@@ -183,10 +188,10 @@
 
 (defn mix-colors
   ([c1 c2]
-     (color (min 255 (+ (.getRed c1) (.getRed c2)))
-            (min 255 (+ (.getGreen c1) (.getGreen c2)))
-            (min 255 (+ (.getBlue c1) (.getBlue c2)))
-            (min 255 (+ (.getAlpha c1) (.getAlpha c2)))))
+     (color (int (/ (+ (.getRed c1) (.getRed c2)) 2))
+            (int (/ (+ (.getGreen c1) (.getGreen c2)) 2))
+            (int (/ (+ (.getBlue c1) (.getBlue c2)) 2))
+            (int (/ (+ (.getAlpha c1) (.getAlpha c2)) 2))))
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
 
