@@ -228,17 +228,22 @@
 #_(defn f [] (c/make :panel
                      (.add
                       (form [:header "Personal info"]
-                            [:text "Make sure you enter all the info!!"]
+                            [:header "Main" :level 3]
                             :first-name "Stathis"
                             :surname "Sideris"
-                            :address "122 essex road"
-                            :sex ["male" "female"]
+                            :gender ["male" "female"]
+                            [:header "Address" :level 3]
+                            :line1 "50 Essex Road" [:label "Number and street"]
+                            :line2 "" [:label "Line 2"]
+                            :postcode ""
+                            :city ""
+                            :country ""
                             ))))
 #_(defn f2 [] (c/make :panel
                      (:layout (java.awt.FlowLayout.))
                      (.add (c/make :label "ddd"))
                      (.add (c/make :button "lalalala"))))
-#_(def p (watch-component 'f))
+#_(def p (watch-component #'f))
 #_(def p (watch-component #(f)))
 #_(def p (watch-component #($ (component-watcher-gui) :panel)))
 #_(send p inject-fn f)
