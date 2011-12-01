@@ -189,7 +189,7 @@
                     (update-indicator indicator)
                     (.setText time-label (str "Updated at: "
                                               (str (java.util.Date.))))
-                    (.revalidate frame)
+                    #_(.validate frame)
                     (.pack frame))))]
     (c/do-component
      spinner
@@ -219,7 +219,7 @@
                     (:on-window-closing
                      (send updater stop-action)))
     (swing/do-swing (.toFront frame)
-                    (.replaint frame))
+                    (.repaint frame))
     (send updater start-action)
     updater))
 
