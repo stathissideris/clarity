@@ -1,4 +1,4 @@
-(defproject clarity "0.5.1"
+(defproject clarity "0.5.2"
   :description "Clojure GUI library, based on Swing."
   :autodoc {:name "Clarity"
             :page-title "Clarity API docs"
