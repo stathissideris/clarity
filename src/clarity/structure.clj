@@ -22,10 +22,12 @@
                       (satisfies? c/HasValue %)) (.getComponents this)))))
   (set-value [this value]
     (let [components (comp-seq this)]
-      (for [c components]
-        (if (and (not (nil? (c/id c)))
-                 (satisfies? c/HasValue c)
-                 (contains? value (c/id c)))
+      (println "set-value called")
+      (println (count components))
+      (doseq [c components]
+        (when (and (not (nil? (c/id c)))
+                   (satisfies? c/HasValue c)
+                   (contains? value (c/id c)))
           (c/set-value c (get value (c/id c))))))))
 
 (defn find-by-id
