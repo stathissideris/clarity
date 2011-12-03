@@ -4,6 +4,10 @@
             [clarity.form :as form]
             [clarity.dev :as dev]))
 
+;;Example of how to make a form to automatically update according to
+;;changes to a record contained in a ref.
+
+
 ;;define a record. A record is also a map, therefore it can be used
 ;;with Clarity's "external wiring" capabilities
 (defrecord Person [name address])
@@ -20,8 +24,8 @@
 
 ;;This is the actual "magic" binding. What happens here is that when
 ;;the value of the person atom is modified, the form is populated with
-;;the new value. set-value makes sure that all the fields of the the
-;;form are updated.
+;;the new value. set-value makes sure that all the fields of the form
+;;are updated.
 (add-watch
  person
  :form-watch
