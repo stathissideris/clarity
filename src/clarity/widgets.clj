@@ -48,16 +48,27 @@
 (defn scroll-pane [comp]
   (c/make :scroll-pane comp))
 
-(defn choose-file
-  "Opens a file selection dialog and returns the absolute path of the
-  selected file. The initial path can be passed, and if the second
-  parameter is :save, the dialog is opened in save mode."
-  ([] (choose-file nil))
-  ([path] (choose-file path :load))
-  ([path flag]
-     (let [chooser (JFileChooser. path)
-           option (if (= :save flag)
-                    (.showSaveDialog chooser nil)
-                    (.showOpenDialog chooser nil))]
-       (if (= JFileChooser/APPROVE_OPTION option)
-         (.getAbsolutePath (.getSelectedFile chooser))))))
+(let [selection-mode-map
+      {:files javax.swing.JFileChooser/FILES_ONLY
+       :directories javax.swing.JFileChooser/DIRECTORIES_ONLY 
+       :both javax.swing.JFileChooser/FILES_AND_DIRECTORIES}]
+  (defn choose-file
+    "Opens a file selection dialog and returns the absolute path of
+  the selected file. The initial path can be passed, as the first
+  parameter. Subsequent parameters are key/value pairs that determine
+  the :type of the dialog (:load or :save, :load is default) and
+  the :selection-mode (:files, :directories or :both, :files is
+  default)."
+    ([] (choose-file nil))
+    ([path] (choose-file path :load))
+    ([path & {:keys [type selection-mode]}]
+       (let [selection-mode (if selection-mode
+                              selection-mode :files)
+             chooser (doto (JFileChooser. path)
+                       (.setFileSelectionMode
+                        (get selection-mode-map selection-mode)))
+             option (if (= :save type)
+                      (.showSaveDialog chooser nil)
+                      (.showOpenDialog chooser nil))]
+         (if (= JFileChooser/APPROVE_OPTION option)
+           (.getAbsolutePath (.getSelectedFile chooser)))))))

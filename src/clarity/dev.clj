@@ -11,19 +11,26 @@
             [clarity.util :as util]
             [clojure.contrib.miglayout :as mig])
   (:use [clarity.structure :only [$]])
-  (:import [javax.swing UIManager JFrame ImageIcon]
+  (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
+           [java.awt Frame MouseInfo]
            [java.awt.image BufferedImage]))
 
 (def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
 
 (defn show-comp
   "Show the passed component in a JFrame."
-  [comp]
-  (doto (JFrame.)
-    (.add comp)
-    (.pack)
-    (.setVisible true)))
-
+  [comp & {on-top :on-top
+           :or {on-top false}}]
+  (if (nil? comp)
+    (throw (IllegalArgumentException.
+            "nil component passed to clarity.dev.show-comp"))
+    (c/do-component
+     (JFrame.)
+     (.add comp)
+     (.pack)
+     (:visible true)
+     (:always-on-top on-top))))
+  
 (defn- error-image [msg]
   (let [i (BufferedImage. 600 300 BufferedImage/TYPE_INT_RGB)
         g (.getGraphics i)
@@ -181,7 +188,7 @@
                     (update-indicator indicator)
                     (.setText time-label (str "Updated at: "
                                               (str (java.util.Date.))))
-                    (.revalidate frame)
+                    #_(.validate frame)
                     (.pack frame))))]
     (c/do-component
      spinner
@@ -211,7 +218,7 @@
                     (:on-window-closing
                      (send updater stop-action)))
     (swing/do-swing (.toFront frame)
-                    (.replaint frame))
+                    (.repaint frame))
     (send updater start-action)
     updater))
 
@@ -220,24 +227,61 @@
 #_(defn f [] (c/make :panel
                      (.add
                       (form [:header "Personal info"]
-                            [:text "Make sure you enter all the info!!"]
+                            [:header "Main" :level 3]
                             :first-name "Stathis"
                             :surname "Sideris"
-                            :address "122 essex road"
-                            :sex ["male" "female"]
+                            :gender ["male" "female"]
+                            [:header "Address" :level 3]
+                            :line1 "50 Essex Road" [:label "Number and street"]
+                            :line2 "" [:label "Line 2"]
+                            :postcode ""
+                            :city ""
+                            :country ""
                             ))))
 #_(defn f2 [] (c/make :panel
                      (:layout (java.awt.FlowLayout.))
                      (.add (c/make :label "ddd"))
                      (.add (c/make :button "lalalala"))))
-#_(def p (watch-component 'f))
+#_(def p (watch-component #'f))
 #_(def p (watch-component #(f)))
 #_(def p (watch-component #($ (component-watcher-gui) :panel)))
 #_(send p inject-fn f)
 #_(send p start-action)
 #_(send p stop-action)
 
+(defn all-frames
+  "Get all open frames."
+  []
+  (Frame/getFrames))
 
+(defn frame-titles
+  "Get the titles of all open frames."
+  []
+  (map #(.getTitle %) (all-frames)))
+
+(defn mouse-location
+  "Get the location of the mouse on the screen."
+  []
+  (.getLocation (MouseInfo/getPointerInfo)))
+
+(defn point-from-screen
+  "Convert a screen point to a point relative to the top-left corner
+  of the component."
+  [p component]
+  (let [p (mouse-location)]
+    (SwingUtilities/convertPointFromScreen p component)
+    p))
+
+(defn component-at-screen-point
+  "Returns the deepest component at the screen point p."
+  [p component]
+  (.findComponentAt component (point-from-screen p component)))
+
+(defn component-at-mouse
+  "Returns the deepest component at the position of the mouse,
+  contained within container."
+  [container]
+  (component-at-screen-point (mouse-location) container))
 
 (defn dispose-all-frames
   "Call .dispose on all frames."

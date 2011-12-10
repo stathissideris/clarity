@@ -5,7 +5,7 @@ Clojure GUI library, based on Swing. See the project wiki for details on how to 
 If you are using leiningen, add the following dependency to your
 `project.clj`:
 
-`[clarity "0.5.0-SNAPSHOT"]`
+`[clarity "0.5.2"]`
 
 Example of the form facilities:
 
@@ -15,6 +15,6 @@ Example of the form facilities:
            [:text "Please fill in the **entire** form." :rich]
            :first-name ""
            :surname ""
-           :gender ["male" "female"])
+           :gender ["male" "female" "other"])
      ["OK" "Cancel"])
 `````

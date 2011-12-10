@@ -1,7 +1,19 @@
-(ns clarity.style
-  (require [clarity.component :as c]
+(ns
+    ^{:doc "Various functions concerning the look of the
+    GUI. Currently covers fonts, colors, gradients, some border
+    functionality, and defining and applying stylesheets."
+      :author "Stathis Sideris"}
+
+  clarity.style
+
+  (require [clojure.java.io :as io]
+           [clarity.component :as c]
            [clarity.structure :as s])
-  (import [java.awt Paint Stroke BasicStroke]
+  (use clojure.contrib.apply-macro)
+  (import [java.awt Color Paint Stroke BasicStroke GradientPaint
+           LinearGradientPaint RadialGradientPaint
+           MultipleGradientPaint]
+          [java.awt.geom Point2D$Float Point2D$Double]
           [javax.swing.border AbstractBorder]))
 
 ;;; look and feel
@@ -42,6 +54,10 @@
                     :monospaced java.awt.Font/MONOSPACED
                     :sans java.awt.Font/SANS_SERIF
                     :sans-serif java.awt.Font/SANS_SERIF})
+
+(def font-formats {:truetype java.awt.Font/TRUETYPE_FONT
+                   :tt java.awt.Font/TRUETYPE_FONT
+                   :type1 java.awt.Font/TYPE1_FONT})
 
 ;;; sizes
 
@@ -92,6 +108,36 @@
            (derive-size (.getSize f) size-spec)
            size-spec)))
 
+(defn derive-font
+  "Given a font, derive a new font, by making subsequent calls to the
+  various java.awt.Font/deriveFont methods depending on the presence
+  and the values of the various parameters. All parameters are
+  optional."
+  ;;TODO add support for derive-size-like size definitions
+  [^java.awt.Font f &{style :style size :size transform :transform}]
+  (let [f (if size (.deriveFont f (float size)) f)
+        f (if style (.deriveFont f (get font-styles style)) f)
+        f (if transform (.deriveFont f transform) f)]
+    f))
+
+(defn font-from-file
+  "Create a Font from a file. The format parameter can be :tt
+  or :truetype to load TrueType fonts, or :type1 for Type1 fonts. The
+  file argument is passed to clojure.java.io/file, so it is coerced
+  into a file and therefore can be a String, a File, or a URL/URI
+  pointing to a file. The resulting font has the same size as the
+  default-font."
+  [format file]
+  (let [format (get font-formats format)]
+    (derive-font
+     (java.awt.Font/createFont format (io/file file))
+     :size (.getSize default-font))))
+
+(defn font-from-resource
+  [format resource]
+  (let [format (get font-formats format)])
+  )
+
 (defn font
   "Constructs a font out of three optional named parameters, :name
   :size :style. The name can be any valid font name, or a keyword
@@ -100,6 +146,7 @@
   can be :plain :bold :italic or a vector containing :bold
   and :italic."
   [&{name :name style :style size :size
+     file :file format :format
      :or {style (.getStyle default-font)
           size (.getSize default-font)}}]
   (let [the-style (interpret-font-style style)
@@ -108,24 +155,24 @@
                    name)
         size (if (string? size) (derive-font-size default-font size)
                  size)]
-    (java.awt.Font. the-name the-style size)))
-
-(defn derive-font
-  "Given a font, derive a new font, by overwriting its parameters with
-  the passed ones. The parameters are the same as the (font) function,
-  but the size can be derived by passing a size-spec as in
-  the (derive-size) function."
-  [^java.awt.Font f &{name :name style :style size :size
-       :or {name (.getName f)
-            style (.getStyle f)
-            size (.getSize f)}}]
-  (font :name name
-        :style style
-        :size (derive-font-size f size)))
+    (cond file (derive-font
+                (font-from-file format file)
+                :size size
+                :style style)
+          :else (java.awt.Font. the-name the-style size))))
 
 ;;; color
 
 (defn color
+  "Create a java.awt.Color. The single-parameter form accepts either
+  keywords which it then maps to the static pre-defined colors (so you
+  can say things like (color :white)) or numbers, so that you can pass
+  a color as a hexadecimal.
+
+  The other two versions for RGB and RGBA colors either accept
+  integers from 0 to 255 or floats from 0 to 1. You cannot mix the
+  two."
+  
   ([c]
      (if (keyword? c)
        (eval `(. java.awt.Color ~(symbol (name c))))
@@ -141,12 +188,19 @@
 
 (defn mix-colors
   ([c1 c2]
-     (color (min 255 (+ (.getRed c1) (.getRed c2)))
-            (min 255 (+ (.getGreen c1) (.getGreen c2)))
-            (min 255 (+ (.getBlue c1) (.getBlue c2)))
-            (min 255 (+ (.getAlpha c1) (.getAlpha c2)))))
+     (color (int (/ (+ (.getRed c1) (.getRed c2)) 2))
+            (int (/ (+ (.getGreen c1) (.getGreen c2)) 2))
+            (int (/ (+ (.getBlue c1) (.getBlue c2)) 2))
+            (int (/ (+ (.getAlpha c1) (.getAlpha c2)) 2))))
   ([c1 c2 & colors]
      (reduce mix-colors (conj colors c2 c1))))
+
+;;; geometry
+
+(defn point-float [x y] (Point2D$Float. x y))
+(defn point-double [x y] (Point2D$Double. x y))
+
+(def point point-float)
 
 ;;; borders
 
@@ -181,14 +235,13 @@
                        (proxy-super paintComponent g)))})))
 
 (defn rounded-border
-  "Create a rounded border with the passed corner size in pixels, the
-  paint instance (which can be just a color) to use to draw the
-  border, and the stroke instance that defines the line. Since this is
-  a clarity.style.Border, for an opaque component it must be installed
+  "Create a rounded border with the passed corner size in pixels, and
+  the stroke instance that defines the line. Since this is a
+  clarity.style.Border, for an opaque component it must be installed
   on it using (install-border) to ensure that the component's
   background is painted correctly."
   
-  [corner-size ^Paint paint ^Stroke stroke]
+  [corner-size ^Stroke stroke]
   
   (let [arc (* 2 corner-size)]
     (proxy [AbstractBorder clarity.style.Border] []
@@ -213,22 +266,26 @@
           (doto g
             (.setRenderingHint java.awt.RenderingHints/KEY_ANTIALIASING
                                java.awt.RenderingHints/VALUE_ANTIALIAS_ON)
-            (.setPaint paint)
             (.setStroke stroke)
             (.draw rect)))))))
 
 ;;to try the rounded corners border:
-#_(use 'clarity.dev 'clarity.style 'clarity.component)
+#_(use 'clarity.dev 'clarity.style 'clarity.component 'clarity.dev)
 #_(show-comp
    (make :panel
          (.add
           (make :panel
-                (install-border (rounded-border
-                                 25
-                                 (color :black)
-                                 (stroke 1)))
-                (:background (color :whißte))
+                (install-border
+                 (rounded-border 25 (stroke 1)))
+                (:background (color :yellow))
                 (.add (make :label "Hello World! Borderz!!!"))))))
+
+#_(show-comp
+   (make :panel
+         (.add
+          (make :button "hello"
+                (install-border
+                 (rounded-border 25 (stroke 1)))))))
 
 ;;stroke
 
@@ -239,7 +296,30 @@
                 :round java.awt.BasicStroke/JOIN_ROUND
                 :bevel java.awt.BasicStroke/JOIN_BEVEL}]
   (defn stroke
-    "Creates a basic stroke." ;;TODO more documentation
+    "Creates a basic stroke (java.awt.BasicStroke). The first
+  parameter is the width of the stroke, and it can be customised by
+  passing a number of extra key/value pairs.
+
+  The cap of the stroke can be defined by passing :cap
+  and :butt, :round or :square (default is :round).
+
+  The join of stroke can be defined by passing :join
+  and :miter, :round or :bevel (default is :round).
+
+  The dash pattern can be defined by passing :dash and a vector of
+  numbers. Finally, the dash phase can be defined by
+  passing :dash-phase and a number.
+
+  Examples:
+
+  (stroke 2)
+
+  (stroke 3 :join :miter)
+
+  (stroke 3, :join :round, :cap :square)
+
+  (stroke 5 :dash [10 20 5])"
+
     [width
      & {:keys [cap join miter-limit dash dash-phase]
         :or {cap :round
@@ -251,6 +331,125 @@
           join (if join (get join-map join) nil)
           dash (if dash (into-array Float/TYPE dash) nil)]
       (BasicStroke. width cap join miter-limit dash dash-phase))))
+
+;; gradients
+
+(defn gradient
+  [[x1 y1] c1, [x2 y2] c2 & cyclic?]
+  (let [cyclic? (if cyclic? true false)]
+    (GradientPaint. x1 y1 c1, x2 y2 c2, cyclic?)))
+
+;;example
+#_(gradient [10 10] (color :white)
+            [20 20] (color :black)
+            :cyclic)
+
+(let [cycle-method-map
+      {:no-cycle java.awt.MultipleGradientPaint$CycleMethod/NO_CYCLE
+       :repeat java.awt.MultipleGradientPaint$CycleMethod/REPEAT
+       :reflect java.awt.MultipleGradientPaint$CycleMethod/REFLECT}]
+
+  (defn- parse-gradient-stops [stops]
+    (loop [s stops
+           fractions []
+           colors []]
+
+      (if (or (empty? s) (keyword? (first s)))
+        {:fractions (into-array Float/TYPE fractions)
+         :colors (into-array java.awt.Color colors)
+         :cycle-method (if (first s) (first s) :no-cycle)}
+        (if (not (number? (first s)))
+          (throw (IllegalArgumentException.
+                  (str "Expected number instead of " (first s))))
+          (if (not (instance? java.awt.Color (second s)))
+            (throw (IllegalArgumentException.
+                    (str "Expected color instead of " (second s))))
+            (recur (drop 2 s)
+                   (conj fractions (float (first s)))
+                   (conj colors (second s))))))))
+            
+  (defn linear-gradient
+    "Construct a linear gradient with multiple stops
+  (java.awt.LinearGradientPaint). The first two vectors define the
+  start and end points of the gradient. The rest of the parameters
+  define the stops of the gradient as pairs of numbers (between 0 and
+  1) and colors. Optionally, as a last parameter you can pass a
+  keyword defining the cycle method of the gradient (:no-cycle,
+  :repeat or :reflect, with :no-cycle being the default).
+
+  Example:
+
+  (linear-gradient [10 10]
+                   [100 10]
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+		           0.9 (color :black))"
+    
+    [[x1 y1] [x2 y2] & stops]
+    {:pre [(>= (count stops) 4)]}
+    (let [params (parse-gradient-stops stops)]
+      (LinearGradientPaint.
+       (point x1 y1)
+       (point x2 y2)
+       (:fractions params)
+       (:colors params)
+       (get cycle-method-map (:cycle-method params)))))
+
+  (defn radial-gradient
+    "Construct a radial gradient with multiple stops
+  (java.awt.RadialGradientPaint). The first vector parameter defines
+  the center of the gradient and the second is the radius. If the
+  third parameter is also a 2-element vector, it defines an off-center
+  focus point for the gradient.
+
+  The rest of the parameters define the stops of the gradient as pairs
+  of numbers (between 0 and 1) and colors. Optionally, as a last
+  parameter you can pass a keyword defining the cycle method of the
+  gradient (:no-cycle, :repeat or :reflect, with :no-cycle being the
+  default).
+
+  Example without a custom focus point:
+
+  (radial-gradient [10 10] 100
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+                   0.9 (color :black))
+
+  Example with a custom focus point:
+
+  (radial-gradient [10 10] 100 [0 0]
+                   0.1 (color :white)
+                   0.2 (color :green)
+                   0.5 (color :red)
+                   0.9 (color :black))"
+
+    [[cx cy] radius & stops]
+    (let [focus
+          (if (vector? (first stops))
+            (apply point (first stops))
+            nil)
+          
+          params
+          (if focus
+            (parse-gradient-stops (rest stops))
+            (parse-gradient-stops stops))]
+      (if focus
+        (RadialGradientPaint. ;;with off-center focus
+         (point cx cy)
+         (float radius)
+         focus
+         (:fractions params)
+         (:colors params)
+         (get cycle-method-map (:cycle-method params)))
+        (RadialGradientPaint. ;;no off-center focus
+         (point cx cy)
+         (float radius)
+         (:fractions params)
+         (:colors params)
+         (get cycle-method-map (:cycle-method params)))))))
+
 
 ;;; making stylesheets
 
@@ -287,15 +486,6 @@
      (with-meta
        (vector ~@(map make-style-form styles))
        {:name ~(str name)})))
-
-;;example syntax of a stylesheet
-#_(defstylesheet
-    test-stylesheet
-    (style .important
-           (:color (color :red))
-           (:font (font :style :bold)))
-    (style $title.header
-           (:font (font :size "200%"))))
 
 ;;; applying stylesheets
 (defn apply-stylesheet

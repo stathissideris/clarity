@@ -18,7 +18,7 @@
 
 (extend-type java.awt.Color
   interpolatable
-  (interpolate [start end d]
+  (interpolate [start end t]
                (new java.awt.Color
                     (int (interpolate (.getRed start)   (.getRed end)   t))
                     (int (interpolate (.getGreen start) (.getGreen end) t))
