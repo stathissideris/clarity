@@ -235,14 +235,13 @@
                        (proxy-super paintComponent g)))})))
 
 (defn rounded-border
-  "Create a rounded border with the passed corner size in pixels, the
-  paint instance (which can be just a color) to use to draw the
-  border, and the stroke instance that defines the line. Since this is
-  a clarity.style.Border, for an opaque component it must be installed
+  "Create a rounded border with the passed corner size in pixels, and
+  the stroke instance that defines the line. Since this is a
+  clarity.style.Border, for an opaque component it must be installed
   on it using (install-border) to ensure that the component's
   background is painted correctly."
   
-  [corner-size ^Paint paint ^Stroke stroke]
+  [corner-size ^Stroke stroke]
   
   (let [arc (* 2 corner-size)]
     (proxy [AbstractBorder clarity.style.Border] []
@@ -267,22 +266,26 @@
           (doto g
             (.setRenderingHint java.awt.RenderingHints/KEY_ANTIALIASING
                                java.awt.RenderingHints/VALUE_ANTIALIAS_ON)
-            (.setPaint paint)
             (.setStroke stroke)
             (.draw rect)))))))
 
 ;;to try the rounded corners border:
-#_(use 'clarity.dev 'clarity.style 'clarity.component)
+#_(use 'clarity.dev 'clarity.style 'clarity.component 'clarity.dev)
 #_(show-comp
    (make :panel
          (.add
           (make :panel
-                (install-border (rounded-border
-                                 25
-                                 (color :black)
-                                 (stroke 1)))
-                (:background (color :whißte))
+                (install-border
+                 (rounded-border 25 (stroke 1)))
+                (:background (color :yellow))
                 (.add (make :label "Hello World! Borderz!!!"))))))
+
+#_(show-comp
+   (make :panel
+         (.add
+          (make :button "hello"
+                (install-border
+                 (rounded-border 25 (stroke 1)))))))
 
 ;;stroke
 
