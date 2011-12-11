@@ -1,6 +1,5 @@
 (ns clarity.core
-  (:require [clojure.string :as str]
-            [clarity.chain :as chain]
+  (:require [clarity.chain :as chain]
             [clarity.document :as doc]
             [clarity.renderer :as render]
             [clarity.list :as l])

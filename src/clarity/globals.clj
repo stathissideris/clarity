@@ -1,4 +1,4 @@
 (ns clarity.globals)
 
-(def *id-shorthand* "$")
-(def *category-shorthand* ".")
+(def ^:dynamic *id-shorthand* "$")
+(def ^:dynamic *category-shorthand* ".")

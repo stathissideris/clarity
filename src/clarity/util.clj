@@ -1,5 +1,6 @@
 (ns clarity.util
-  (:import [javax.imageio ImageIO]))
+  (:import [javax.swing SwingUtilities]
+           [javax.imageio ImageIO]))
 
 (defn load-resource
   [name]
@@ -34,3 +35,9 @@
   after the execution is complete."
   [& body]
   `(do-swing* :now (fn [] ~@body)))
+
+(defn clojure-1-2? []
+  (.startsWith (clojure-version) "1.2"))
+
+(defn clojure-1-3? []
+  (.startsWith (clojure-version) "1.3"))

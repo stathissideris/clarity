@@ -1,6 +1,9 @@
 (ns clarity.event
-  (:require clojure.set
-            [clojure.string :as str]))
+  (:require clojure.set)
+  (:use clarity.util))
+
+(cond (clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (clojure-1-3?) (require '[clojure.string :as str]))
 
 (defmacro qw
   "Constructs a vector of the names (strings) of the passed symbols.

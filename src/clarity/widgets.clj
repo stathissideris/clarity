@@ -1,10 +1,13 @@
 (ns clarity.widgets
   (:require [clarity.component :as c]
-            [clarity.style :as style]
-            [clojure.string :as str])
+            [clarity.style :as style])
+  (:use clarity.util)
   (:import [javax.swing JSplitPane JScrollPane JEditorPane JFileChooser]
            [javax.swing.text.html HTMLEditorKit]
            [com.petebevin.markdown MarkdownProcessor]))
+
+(cond (clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (clojure-1-3?) (require '[clojure.string :as str]))
 
 ;;; this part of the namespace wraps some Swing components to make them more
 ;;; clojure-y and implements some other components for common tasks

@@ -9,7 +9,6 @@
   (require [clojure.java.io :as io]
            [clarity.component :as c]
            [clarity.structure :as s])
-  (use clojure.contrib.apply-macro)
   (import [java.awt Color Paint Stroke BasicStroke GradientPaint
            LinearGradientPaint RadialGradientPaint
            MultipleGradientPaint]
