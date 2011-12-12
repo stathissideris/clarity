@@ -9,14 +9,14 @@
             :copyright "Copyright 2011 by Stathis Sideris"
             :load-except-list [#"test/" #"project\.clj"
                                #"autodoc/" #"src/examples/"]}
-  :dependencies      [[org.clojure/clojure "1.3.0"]
+  :dependencies      [[org.clojure/clojure "1.2.0"]
+                      [org.clojure/clojure-contrib "1.2.0"]
                       [artem "0.5"]
                       [org.markdownj/markdownj "0.3.0-1.0.2b4"]]
   :dev-dependencies  [[lein-clojars "0.6.0"]
                       [lein-multi "1.1.0-SNAPSHOT"]
                       [org.clojars.weavejester/autodoc "0.9.0"]]
-  :multi-deps {"1.2" [[org.clojure/clojure "1.2.0"]
-                      [org.clojure/clojure-contrib "1.2.0"]
+  :multi-deps {"1.3" [[org.clojure/clojure "1.3.0"]
                       [artem "0.5"]
                       [org.markdownj/markdownj "0.3.0-1.0.2b4"]]}
   :main clarity.core
