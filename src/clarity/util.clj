@@ -37,7 +37,9 @@
   `(do-swing* :now (fn [] ~@body)))
 
 (defn clojure-1-2? []
-  (.startsWith (clojure-version) "1.2"))
+  (and (= 1 (:major *clojure-version*))
+       (= 2 (:minor *clojure-version*))))
 
 (defn clojure-1-3? []
-  (.startsWith (clojure-version) "1.3"))
+  (and (= 1 (:major *clojure-version*))
+       (= 3 (:minor *clojure-version*))))
