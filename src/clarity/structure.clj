@@ -4,12 +4,12 @@
             [clarity.component :as c]))
 
 (defn comp-seq
-  "Walks the contents of the passed java.awt.Container depth-first and
-  returns the results as a lazy sequence."
+  "Walks the contents of the passed clarity.component.HasChildren
+  depth-first and returns the results as a lazy sequence."
   [root]
-  {:pre [(instance? java.awt.Container root)]}
-  (tree-seq (fn [node] (not (zero? (count (.getComponents node)))))
-            (fn [node] (.getComponents node))
+  {:pre [(satisfies? c/HasChildren root)]}
+  (tree-seq (fn [node] (not (zero? (c/count-children node))))
+            (fn [node] (c/children node))
             root))
 
 (extend-type java.awt.Container
@@ -45,11 +45,6 @@
       (if (nil? parent) p
         (recur parent (conj p parent))))))
 
-(defn children
-  "Returns the list of child components of parent as a seq."
-  [parent]
-  (seq (.getComponents parent)))
-
 (defn parent
   "Returns the parent of the component."
   [component]
@@ -61,7 +56,7 @@
   [component]
   (let [p (parent component)]
     (if p
-      (let [c (children p)
+      (let [c (c/children p)
             index (.indexOf c component)]
         (if (not (zero? index))
           (nth c (dec index)))))))
@@ -72,7 +67,7 @@
   [component]
   (let [p (parent component)]
     (if p
-      (let [c (children p)
+      (let [c (c/children p)
             index (.indexOf c component)]
         (if (not= index (dec (count c)))
           (nth c (inc index)))))))

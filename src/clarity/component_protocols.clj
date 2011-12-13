@@ -74,3 +74,14 @@
   HasSelection
   (selection [this] (.getSelectionPaths this))
   (set-selection [this selection] (.setSelectionPaths this selection)))
+
+;;; basic component structure
+
+(defprotocol HasChildren
+  (children [this])
+  (count-children [this]))
+
+(extend-type java.awt.Container
+  HasChildren
+  (children [this] (seq (.getComponents this)))
+  (count-children [this] (alength (.getComponents this))))
