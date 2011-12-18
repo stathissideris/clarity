@@ -456,7 +456,7 @@
 (defn- make-style-form
   [[_ matcher & look-forms]]
   {:matcher `(s/matcher ~matcher)
-   :mutator `(c/make-component-mutator ~@look-forms)})
+   :mutator `(c/mutator ~@look-forms)})
 
 (defmacro defstylesheet
   "Defines a stylesheet. The syntax is:
