@@ -136,7 +136,7 @@
 (defn font-from-resource
   [format resource]
   (let [format (get font-formats format)])
-  )
+  ) ;;TODO
 
 (defn font
   "Constructs a font out of three optional named parameters, :name
@@ -222,7 +222,18 @@
   
   (.setBorder component border)
   (when (satisfies? Border border)
-    (.setOpaque component false)
+    (c/do-component
+     component
+     (:impl (isOpaque [] false)
+            (paintComponent [g]
+                           (let [p (.getPaint g)
+                           b (.getBorder this)]
+                       (when (satisfies? Border b)
+                         (.setPaint g (.getBackground this))
+                         (.fill g (shape b this))
+                         (.setPaint g p))
+                       (proxy-super paintComponent g)))))
+    
     (update-proxy component
                   {"paintComponent"
                    (fn [this g]
@@ -276,7 +287,7 @@
          (.add
           (make :panel
                 (install-border
-                 (rounded-border 25 (stroke 1)))
+                 (rounded-border 25 (stroke 3)))
                 (:background (color :yellow))
                 (.add (make :label "Hello World! Borderz!!!"))))))
 
@@ -468,7 +479,7 @@
 
   Where the matchers are defined using the same syntax as the forms
   passed to the clarity.structure/matcher macro. The mutator forms
-  follow the syntax of clarity.structure/do-component. Here is a more
+  follow the syntax of clarity.component/do-component. Here is a more
   concrete example:
 
   (defstylesheet
