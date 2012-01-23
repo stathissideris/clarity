@@ -50,17 +50,15 @@
 ;;(defn make-bold [str-ref]
 ;;  (fn [component list-component value index selected focused]
 ;;    (if (string? value)      
-;;      [component list-component value index selected focused])
+;;      [component list-component value index selected focused])))
 
 (defn make-list-renderer [& renderers]
   (proxy [javax.swing.DefaultListCellRenderer] []
-    (getListCellRendererComponent [list-component value index selected focused]
-                                  (let [component
-                                        (proxy-super getListCellRendererComponent
-                                                     list-component value index selected focused)]
-                                    (chain/chain renderers
-                                                 component
-                                                 list-component
-                                                 value index
-                                                 selected
-                                                 focused) component))))
+    (getListCellRendererComponent
+      [list-component value index selected? focused?]
+      (let [component
+            (proxy-super getListCellRendererComponent
+                         list-component value index selected? focused?)
+            renderer-fn (apply comp (reverse renderers))]
+        (first (renderer-fn component list-component
+                      value index selected? focused?))))))

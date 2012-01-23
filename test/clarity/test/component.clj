@@ -40,7 +40,7 @@
     (is (= 10 (value button)))
     (is (= "correct" (.getText button)))))
 
-(deftest make-with-interface-and-implementation2
+(deftest make-with-interface-and-implementation3
   (let [button
         (make [:button java.lang.Readable]
               (:impl

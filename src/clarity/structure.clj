@@ -22,8 +22,6 @@
                       (satisfies? c/HasValue %)) (.getComponents this)))))
   (set-value [this value]
     (let [components (comp-seq this)]
-      (println "set-value called")
-      (println (count components))
       (doseq [c components]
         (when (and (not (nil? (c/id c)))
                    (satisfies? c/HasValue c)
