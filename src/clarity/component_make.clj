@@ -3,6 +3,8 @@
 ;;; this part of the namespace implements the construction and
 ;;; manipulation of components
 
+(def ^{:dynamic true} *default-stylesheet* nil)
+
 (def special-setters #{:init :id :category :categories})
 (def class-name-map
   {:has-value 'clarity.component.HasValue
@@ -226,6 +228,19 @@
              (get_id [] ~'id))]
        (update-proxy ~'result (component-mixin))
        ~@(map process-special-setter special-setters)
+       
+       ;;apply default style
+       (let [~'style
+             (first
+              (map util/resolve-value [~''*stylesheet*
+                                       'clarity/*stylesheet*]))]
+         (when ~'style
+           (clarity.style/apply-stylesheet ~'result ~'style)
+           (do-component
+            ~'result
+            (:on-component-added
+             (clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
+
        ~'result)))
 
 (defmacro make
@@ -309,7 +324,11 @@
 
   Note that any :impl forms are evaluated before the setter calls in
   the same (make), irrespective of the actual order that they appear
-  in the code."
+  in the code.
+
+  If your namespace contains a var called *stylesheet* then its value
+  will be as the default stylesheet to be applied to all the
+  components constructed using this macro."
 
   [& args]
   (let [{:keys [constructor

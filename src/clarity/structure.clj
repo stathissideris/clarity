@@ -1,6 +1,6 @@
 (ns clarity.structure
   (:use clojure.walk)
-  (:require [clarity.globals :as globals]
+  (:require clarity
             [clarity.component :as c]))
 
 (defn comp-seq
@@ -418,14 +418,11 @@
       (:on-mouse-out (.setText comp18080 \"out\"))))
 
   (The exact variable names may differ, as they are generated to be
-  unique depending on the context).
-
-  It is possible to make this macro use a different prefix for the IDs
-  by re-binding clarity.globals/*id-shorthand*."
+  unique depending on the context)."
   [root & forms]
   (let [dollar?
         (fn [x] (and (symbol? x)
-                     (.startsWith (name x) globals/*id-shorthand*)))
+                     (.startsWith (name x) "$")))
         
         collect-dollars
         (fn [f] (filter dollar? (flatten f)))

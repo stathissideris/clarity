@@ -513,4 +513,5 @@
   (doseq [component (s/comp-seq root)]
     (doseq [style stylesheet]
       (if ((:matcher style) component)
-        ((:mutator style) component)))))
+        ((:mutator style) component))))
+  root)

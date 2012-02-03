@@ -5,7 +5,8 @@
   clarity.component
   (:require [clojure.string :as str]
             [clojure.contrib.str-utils2 :as str2]
-            [clarity.event :as event]))
+            [clarity.event :as event]
+            [clarity.util :as util]))
 
 (defprotocol Component
   (get-id [this])
