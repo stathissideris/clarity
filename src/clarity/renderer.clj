@@ -1,6 +1,5 @@
 (ns clarity.renderer
-  (require [clarity.chain :as chain]
-           [clojure.contrib.string :as str])
+  (require [clarity.chain :as chain])
   (import [java.awt Color]))
 
 (def background1 java.awt.Color/white)

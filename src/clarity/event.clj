@@ -1,6 +1,9 @@
 (ns clarity.event
-  (:require clojure.set
-            [clojure.contrib.str-utils2 :as str2]))
+  (:require clojure.set)
+  (:use clarity.util))
+
+(cond (clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (clojure-1-3?) (require '[clojure.string :as str]))
 
 (defmacro qw
   "Constructs a vector of the names (strings) of the passed symbols.
@@ -73,32 +76,32 @@
   "Seperate camel-case with spaces."
   [s]
   (-> s
-      (str2/replace #"[A-Z]" #(str " " %))
-      (str2/trim)
+      (str/replace #"[A-Z]" #(str " " %))
+      (str/trim)
       (.toLowerCase)
-      (str2/split #" ")))
+      (str/split #" ")))
 
 (defn first-lower [s]
-  (str (str2/lower-case (str2/take s 1))
-       (str2/drop s 1)))
+  (str (str/lower-case (apply str (take 1 s)))
+       (apply str (drop 1 s))))
 
 (defn make-listener-keyword [clazz]
   (keyword
-   (str2/lower-case
-    (str2/join
+   (str/lower-case
+    (str/join
      "-"
      (-> clazz
-         (str2/replace "Listener" "")
-         (str2/replace "java.awt.event." "")
-         (str2/replace "javax.swing.event." "")
+         (str/replace "Listener" "")
+         (str/replace "java.awt.event." "")
+         (str/replace "javax.swing.event." "")
          (split-camel))))))
 
 (defn listener-keyword-to-adder [key]
   (symbol
    (str ".add"
         (apply str
-               (map str2/capitalize
-                    (str2/split (name key) #"-"))) "Listener")))
+               (map str/capitalize
+                    (str/split (name key) #"-"))) "Listener")))
 
 (defn make-event-keyword
   "Make the event keyword used in the components special setters from
@@ -106,8 +109,8 @@
   [method]
   (keyword
    (str "on-"
-        (str2/join "-"
-                   (split-camel (.getName method))))))
+        (str/join "-"
+                  (split-camel (.getName method))))))
 
 ;;(defn parse-event-keyword [key]
 ;;  (symbol

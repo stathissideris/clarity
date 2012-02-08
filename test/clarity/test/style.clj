@@ -10,8 +10,8 @@
   (is (= 12 (derive-size 10 "+2")))
   (is (= 8 (derive-size 10 "-2")))
   (is (= 50 (derive-size 25 "x2")))
-  (is (= 75 (derive-size 50 "x1.5")))
-  (is (= 25 (derive-size 50 "x0.5"))))
+  (is (= 75.0 (derive-size 50 "x1.5")))
+  (is (= 25.0 (derive-size 50 "x0.5"))))
 
 (deftest test-font-creation
   (is (= "Dialog" (.getName (font :name :dialog))))

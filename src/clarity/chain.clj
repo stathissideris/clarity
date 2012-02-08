@@ -1,8 +1,6 @@
 (ns ^{:doc "Functions to \"pipe\" functions together by passing the
 	output of one to the input of the next."}
-  clarity.chain
-  (:require
-   [clojure.contrib.logging :as log]))
+  clarity.chain)
 
 (defn chain-vetoable
   "Chains the passed functions. Stops and returns :veto if one of the

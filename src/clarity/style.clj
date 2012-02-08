@@ -9,7 +9,6 @@
   (require [clojure.java.io :as io]
            [clarity.component :as c]
            [clarity.structure :as s])
-  (use clojure.contrib.apply-macro)
   (import [java.awt Color Paint Stroke BasicStroke GradientPaint
            LinearGradientPaint RadialGradientPaint
            MultipleGradientPaint]
@@ -135,8 +134,7 @@
 
 (defn font-from-resource
   [format resource]
-  (let [format (get font-formats format)])
-  ) ;;TODO
+  (let [format (get font-formats format)])) ;;TODO
 
 (defn font
   "Constructs a font out of three optional named parameters, :name

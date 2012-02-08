@@ -9,7 +9,6 @@
             [clarity.widgets :as w]
             [clarity.style :as style]
             [clarity.util :as util]
-            [clojure.contrib.swing-utils :as swing]
             [clojure.contrib.miglayout :as mig])
   (:use [clarity.structure :only [$]])
   (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
@@ -183,7 +182,7 @@
         updater (periodic-caller
                  500
                  (fn []
-                   (swing/do-swing
+                   (util/do-swing
                     (.removeAll panel)
                     (.add panel (get-component) java.awt.BorderLayout/CENTER)
                     (update-indicator indicator)

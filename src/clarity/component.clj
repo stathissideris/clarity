@@ -3,10 +3,11 @@
     are make and do-component."
       :author "Stathis Sideris"}
   clarity.component
-  (:require [clojure.string :as str]
-            [clojure.contrib.str-utils2 :as str2]
-            [clarity.event :as event]
+  (:require [clarity.event :as event]
             [clarity.util :as util]))
+
+(cond (util/clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (util/clojure-1-3?) (require '[clojure.string :as str]))
 
 (defprotocol Component
   (get-id [this])

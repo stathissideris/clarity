@@ -1,8 +1,5 @@
 (ns clarity.core
-  (:require [clojure.contrib.pprint :as pp]
-            [clojure.string :as str]
-            [clojure.contrib.swing-utils :as sw]
-            [clarity.chain :as chain]
+  (:require [clarity.chain :as chain]
             [clarity.document :as doc]
             [clarity.renderer :as render]
             [clarity.list :as l])
@@ -14,7 +11,7 @@
 (defmacro text [& args] `(new JTextField ~@args))
 (defmacro jlist [& args] `(new JList ~@args))
 
-(defn test-document []
+#_(defn test-document []
   (let [text-component (text)]
     (sw/do-swing (.setText text-component "pre-"))
     (.setDocument text-component

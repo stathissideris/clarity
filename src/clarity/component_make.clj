@@ -235,11 +235,11 @@
               (map util/resolve-value [~''*stylesheet*
                                        'clarity/*stylesheet*]))]
          (when ~'style
-           (clarity.style/apply-stylesheet ~'result ~'style)
+           ('clarity.style/apply-stylesheet ~'result ~'style)
            (do-component
             ~'result
             (:on-component-added
-             (clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
+             ('clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
 
        ~'result)))
 
