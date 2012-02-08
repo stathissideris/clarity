@@ -1,5 +1,9 @@
 (in-ns 'clarity.component)
 
+(ns clarity.style)
+(defn apply-stylesheet [_ _])
+(in-ns 'clarity.component)
+
 ;;; this part of the namespace implements the construction and
 ;;; manipulation of components
 
@@ -230,16 +234,13 @@
        ~@(map process-special-setter special-setters)
        
        ;;apply default style
-       (let [~'style
-             (first
-              (map util/resolve-value [~''*stylesheet*
-                                       'clarity/*stylesheet*]))]
+       (let [~'style (util/resolve-value ~''*stylesheet*)]
          (when ~'style
-           ('clarity.style/apply-stylesheet ~'result ~'style)
+           (clarity.style/apply-stylesheet ~'result ~'style)
            (do-component
             ~'result
             (:on-component-added
-             ('clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
+             (clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
 
        ~'result)))
 
