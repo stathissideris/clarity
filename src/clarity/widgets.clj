@@ -75,3 +75,22 @@
                       (.showOpenDialog chooser nil))]
          (if (= JFileChooser/APPROVE_OPTION option)
            (.getAbsolutePath (.getSelectedFile chooser)))))))
+
+(defn set-combo-list-width
+  "Sets the width of a combo box list to a width different (usually
+  wider) than the box's width. This function will re-map the doLayout
+  and getSize methods of the proxy."
+  [cb width]
+  (let [real-size (atom false)]
+    (update-proxy
+     cb
+     {"doLayout"
+      (fn [this]
+        (reset! real-size true)
+        (proxy-super doLayout)
+        (reset! real-size false))
+      "getSize"
+      (fn [this]
+        (if @real-size
+          (proxy-super getSize)
+          (style/dimension width (style/height (style/pref-size cb)))))})))

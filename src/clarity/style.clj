@@ -92,6 +92,13 @@
 (defn dimension [w h]
   (java.awt.Dimension. w h))
 
+(defn width [dim] (.getWidth dim))
+(defn height [dim] (.getHeight dim))
+(defn actual-size [c] (.getSize c))
+(defn min-size [c] (.getMinimumSize c))
+(defn max-size [c] (.getMaximumSize c))
+(defn pref-size [c] (.getPreferredSize c))
+
 ;;; font
 
 (defn ^{:private true} interpret-font-style [style]
