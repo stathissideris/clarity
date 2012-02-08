@@ -72,7 +72,7 @@
            updater (future
                     (while true
                       (Thread/sleep (/ 1000 fps))
-                      (swing/do-swing (.repaint panel))))]
+                      (util/do-swing (.repaint panel))))]
        (c/make :frame
                (.add panel)
                (.pack)
@@ -217,7 +217,7 @@
                     (:size (style/dimension 550 400))
                     (:on-window-closing
                      (send updater stop-action)))
-    (swing/do-swing (.toFront frame)
+    (util/do-swing (.toFront frame)
                     (.repaint frame))
     (send updater start-action)
     updater))
