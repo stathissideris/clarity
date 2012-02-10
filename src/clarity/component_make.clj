@@ -233,16 +233,6 @@
              (get_id [] ~'id))]
        (update-proxy ~'result (component-mixin))
        ~@(map process-special-setter special-setters)
-       
-       ;;apply default style
-       (let [~'style (util/resolve-value ~''*stylesheet*)]
-         (when ~'style
-           (clarity.style/apply-stylesheet ~'result ~'style)
-           (do-component
-            ~'result
-            (:on-component-added
-             (clarity.style/apply-stylesheet (.getChild ~'event) ~'style)))))
-
        ~'result)))
 
 (defmacro make
@@ -326,11 +316,7 @@
 
   Note that any :impl forms are evaluated before the setter calls in
   the same (make), irrespective of the actual order that they appear
-  in the code.
-
-  If your namespace contains a var called *stylesheet* then its value
-  will be as the default stylesheet to be applied to all the
-  components constructed using this macro."
+  in the code."
 
   [& args]
   (let [{:keys [constructor
