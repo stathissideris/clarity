@@ -30,17 +30,21 @@
     (is (instance? javax.swing.JButton button))))
 
 (deftest make-with-interface-and-implementation
-  (let [button
+  (let [v (atom 10)
+        button
         (make [:button :has-value]
               (:impl
-               (value [] 10)
+               (value [] @v)
+               (set-value [x] (reset! v x))
                (getText [] "correct")))]
     (is (satisfies? HasValue button))
     (is (instance? javax.swing.JButton button))
     (is (= 10 (value button)))
+    (set-value button 20)
+    (is (= 20 (value button)))
     (is (= "correct" (.getText button)))))
 
-(deftest make-with-interface-and-implementation3
+(deftest make-with-interface-and-implementation2
   (let [button
         (make [:button java.lang.Readable]
               (:impl

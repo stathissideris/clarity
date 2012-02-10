@@ -90,6 +90,7 @@
         (.setText this text))]"
   [[fn-name args & body]]
   (let [method-name (name (make-setter-name fn-name))
+        method-name (.replaceAll method-name "-" "_")
         method-name (if (.startsWith method-name ".")
                       (apply str (drop 1 method-name))
                       method-name)]
