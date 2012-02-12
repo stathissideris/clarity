@@ -13,6 +13,7 @@
            LinearGradientPaint RadialGradientPaint
            MultipleGradientPaint]
           [java.awt.geom Point2D$Float Point2D$Double]
+          [javax.swing BorderFactory]
           [javax.swing.border AbstractBorder]))
 
 ;;; look and feel
@@ -302,6 +303,10 @@
           (make :button "hello"
                 (install-border
                  (rounded-border 25 (stroke 1)))))))
+
+(defn empty-border [& {:keys [top bottom left right]
+                       :or {top 0, bottom 0, left 0, right 0}}]
+  (BorderFactory/createEmptyBorder top left bottom right))
 
 ;;stroke
 
