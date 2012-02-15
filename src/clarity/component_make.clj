@@ -90,12 +90,9 @@
         (.setText this text))]"
   [[fn-name args & body]]
   (let [method-name (name (make-setter-name fn-name))
-        method-name (if (symbol? method-name)
-                      (-> method-name
-                          (name)
-                          (.replaceAll "-" "_")
-                          (symbol))
-                      method-name)
+        method-name (-> method-name
+                        (name)
+                        (.replaceAll "-" "_"))
         method-name (if (.startsWith method-name ".")
                       (apply str (drop 1 method-name))
                       method-name)]
