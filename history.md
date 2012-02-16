@@ -1,6 +1,6 @@
 # History
 
-## 0.5.3
+## 0.5.4
 * Introduction of the new text system which makes it much easier to
   create AttributedStrings. See the clarity.text namespace.
 * Added support for immutable table models and viewing table models as
