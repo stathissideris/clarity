@@ -1,5 +1,4 @@
 (ns clarity.util
-  (:require [clarity.event :as event])
   (:import [javax.swing SwingUtilities]
            [javax.imageio ImageIO]))
 
@@ -46,19 +45,6 @@
   after the execution is complete."
   [& body]
   `(do-swing* :now (fn [] ~@body)))
-
-(defmacro timer
-  "Creates a javax.swing.Timer with the specified delay, which
-  executes the code in body at the specified intervals. Delay is in
-  milliseconds. The timer waits the specified amount of time before
-  executing the code for the first time, and after that, it continues
-  executing the code every time the delay time has elapsed."
-  [delay & body]
-  `(javax.swing.Timer.
-     ~delay
-     (event/listener
-      :action
-      (:on-action-performed ~@body))))
 
 (defn clojure-1-2? []
   (and (= 1 (:major *clojure-version*))

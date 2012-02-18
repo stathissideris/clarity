@@ -1,9 +1,5 @@
 (in-ns 'clarity.component)
 
-(ns clarity.style)
-(defn apply-stylesheet [_ _])
-(in-ns 'clarity.component)
-
 ;;; this part of the namespace implements the construction and
 ;;; manipulation of components
 
@@ -27,7 +23,7 @@
 (defn event-form? [form]
   (if (sequential? form)
     (let [[k v] form]
-      (contains? (into #{} (keys clarity.event/event-map)) k))))
+      (contains? (into #{} (keys event/event-map)) k))))
 ;;TODO optimize?
 
 (defn event-form-listener [[k v]]

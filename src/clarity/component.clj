@@ -3,8 +3,8 @@
     are make and do-component."
       :author "Stathis Sideris"}
   clarity.component
-  (:require [clarity.event :as event]
-            [clarity.util :as util]))
+  (:require [clarity.util :as util]
+            [clarity.event :as event]))
 
 (cond (util/clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
       (util/clojure-1-3?) (require '[clojure.string :as str]))
