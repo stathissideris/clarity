@@ -9,7 +9,7 @@
             [clarity.widgets :as w]
             [clarity.style :as style]
             [clarity.util :as util]
-            [clojure.contrib.miglayout :as mig])
+            [clarity.layout :as layout])
   (:use [clarity.structure :only [$]])
   (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
            [java.awt Frame MouseInfo]
@@ -94,7 +94,7 @@
 
 (defn component-watcher-gui []
   (let [panel
-        (mig/miglayout
+        (layout/mig
          (c/make :panel (:id :panel))
          :layout :nogrid :fillx ;;:debug
          :row "[][grow][]"
