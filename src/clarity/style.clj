@@ -7,6 +7,7 @@
   clarity.style
 
   (require [clojure.java.io :as io]
+           [clojure.string :as str]
            [clarity.component :as c]
            [clarity.structure :as s])
   (import [java.awt Color Paint Stroke BasicStroke GradientPaint
@@ -476,8 +477,11 @@
 
 (defn- make-style-form
   [[_ matcher & look-forms]]
-  {:matcher `(s/matcher ~matcher)
-   :mutator `(c/mutator ~@look-forms)})
+  `(with-meta
+     {:matcher (s/matcher ~matcher)
+      :mutator (c/mutator ~@look-forms)}
+     {:matcher-code (quote ~matcher)
+      :mutator-code (quote [~@look-forms])}))
 
 (defmacro defstylesheet
   "Defines a stylesheet. The syntax is:
@@ -525,3 +529,16 @@
       (if ((:matcher style) component)
         ((:mutator style) component))))
   root)
+
+(defn explain-stylesheet [[_ root stylesheet]]
+  (let [root (eval root)
+        stylesheet (eval stylesheet)]
+   (doseq [component (s/comp-seq root)]
+     (doseq [style stylesheet]
+       (if ((:matcher style) component)
+         (println
+          (str "Style: " (:matcher-code (meta style))
+               "\nmatches: " component
+               "\n...and will mutate it as follows:\n"
+               (str/join "\n" (:mutator-code (meta style)))
+               "\n\n---\n")))))))

@@ -10,7 +10,7 @@
             [clarity.style :as style]
             [clarity.util :as util]
             [clarity.layout :as layout])
-  (:use [clarity.structure :only [$]])
+  (:use [clarity.structure :only [$ comp-seq]])
   (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
            [java.awt Frame MouseInfo]
            [java.awt.image BufferedImage]))
@@ -288,3 +288,10 @@
   []
   (doseq [frame (java.awt.Frame/getFrames)]
     (.dispose frame)))
+
+;;(defmulti explain (fn [x] (first x)))
+;;(defmethod explain 'apply-stylesheet [[_ root stylesheet]])
+
+(defmacro explain [x]
+  (if (= 'apply-stylesheet (first x))
+    (style/explain-stylesheet x)))
