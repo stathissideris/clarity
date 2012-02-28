@@ -44,6 +44,19 @@
     (contains? (categories comp) category)
     (catch Exception e false)))
 
+(defn debug-category [component]
+  (if (has-category component)
+    (apply str )
+    nil))
+
+(defn debug-name [component]
+  (if-let
+      [i (id component)] (str "$" (name i))
+      (if (not (empty? (categories component)))
+        (str "." (str/join "." (map name (categories component))))
+        (str (.getName (class component))
+             "@" (Integer/toHexString (.hashCode component))))))
+
 ;;the rest of the namespace has been split over the following files
 (load "component_protocols")
 (load "component_make")

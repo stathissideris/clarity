@@ -530,15 +530,34 @@
         ((:mutator style) component))))
   root)
 
+
+(defn style-debug-str [style]
+  (str "Style: " (:matcher-code (meta style))
+       "\nMutator:\n  "
+       (str/join "\n  " (:mutator-code (meta style)))))
+
 (defn explain-stylesheet [[_ root stylesheet]]
-  (let [root (eval root)
-        stylesheet (eval stylesheet)]
-   (doseq [component (s/comp-seq root)]
-     (doseq [style stylesheet]
-       (if ((:matcher style) component)
-         (println
-          (str "Style: " (:matcher-code (meta style))
-               "\nmatches: " component
-               "\n...and will mutate it as follows:\n"
-               (str/join "\n" (:mutator-code (meta style)))
-               "\n\n---\n")))))))
+  (let [path-str (fn [component]
+                   (str/join "/" (map c/debug-name (s/path component))))
+
+        root (eval root)
+        
+        stylesheet (eval stylesheet)
+        
+        results
+        (group-by
+         first
+         (filter
+          (fn [[style component]] ((:matcher style) component))
+          (for [component (s/comp-seq root)
+                style stylesheet]
+            [style component])))]
+    (doseq [style stylesheet]
+      (let [matched (map second (get results style))]
+        (println
+         (str (style-debug-str style)
+              (if (empty? matched)
+                "\nno matches."
+                (str "\nmatches:\n  "
+                     (str/join "\n  " (map path-str matched))))
+              "\n\n---\n"))))))

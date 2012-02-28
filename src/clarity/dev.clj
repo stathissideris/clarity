@@ -293,5 +293,5 @@
 ;;(defmethod explain 'apply-stylesheet [[_ root stylesheet]])
 
 (defmacro explain [x]
-  (if (= 'apply-stylesheet (first x))
+  (if (= #'clarity.style/apply-stylesheet (resolve (first x)))
     (style/explain-stylesheet x)))
