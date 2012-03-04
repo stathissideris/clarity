@@ -1,5 +1,11 @@
 # History
 
+## 0.5.5
+
+* clarity.dev/explain function. Currently supports explaining what
+  will happen if you apply a stylesheet to a component.
+* timer macro in clarity.event
+
 ## 0.5.4
 * Introduction of the new text system which makes it much easier to
   create AttributedStrings. See the clarity.text namespace.
