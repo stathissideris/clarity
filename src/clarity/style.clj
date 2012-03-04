@@ -531,33 +531,56 @@
   root)
 
 
-(defn style-debug-str [style]
+(defn style-debug-str
+  "Returns a debug string that shows matcher and the mutator of the
+  passed style."
+  [style]
   (str "Style: " (:matcher-code (meta style))
        "\nMutator:\n  "
        (str/join "\n  " (:mutator-code (meta style)))))
 
-(defn explain-stylesheet [[_ root stylesheet]]
+(defn explain-stylesheet
+  "Prints out information about what will happen if the passed
+  stylesheet is applied to the passed root component. By default only
+  the matching styles are included in the output, but you can control
+  this, by passing the extra :show named parameter that accepts one of
+  :all :matched :not-matched."
+  
+  [root stylesheet &{show :show :or {show :matched}}]
+  {:pre [(some #{:all :matched :not-matched} [show])]}
   (let [path-str (fn [component]
                    (str/join "/" (map c/debug-name (s/path component))))
+        
+        print-style
+        (fn [style matched]
+          (println
+           (str (style-debug-str style)
+                (if (empty? matched)
+                  "\nNo matches."
+                  (str "\nMatches (" (count matched) "):\n  "
+                       (str/join "\n  " (map path-str matched))))
+                "\n\n---\n")))
 
-        root (eval root)
-        
-        stylesheet (eval stylesheet)
-        
         results
         (group-by
          first
-         (filter
-          (fn [[style component]] ((:matcher style) component))
-          (for [component (s/comp-seq root)
-                style stylesheet]
-            [style component])))]
+         (filter (fn [[_ _ match?]] match?) 
+                 (for [component (s/comp-seq root)
+                       style stylesheet]
+                   [style component ((:matcher style) component)])))]
+    
+    (println (case show
+               :matched "--- Showing matches only ---"
+               :not-matched "--- Showing styles that do not match ---"
+               :all "--- Showing both styles that match and do not match ---"))
+    (println (str (count results)
+                  " out of " (count stylesheet) " styles match"))
+
+    (println "\n---\n")
+
     (doseq [style stylesheet]
       (let [matched (map second (get results style))]
-        (println
-         (str (style-debug-str style)
-              (if (empty? matched)
-                "\nno matches."
-                (str "\nmatches:\n  "
-                     (str/join "\n  " (map path-str matched))))
-              "\n\n---\n"))))))
+        (case show
+          :matched (if-not (empty? matched) (print-style style matched))
+          :not-matched (if (empty? matched) (print-style style matched))
+          :all (print-style style matched))))))

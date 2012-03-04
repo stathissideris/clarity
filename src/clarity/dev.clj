@@ -292,6 +292,49 @@
 ;;(defmulti explain (fn [x] (first x)))
 ;;(defmethod explain 'apply-stylesheet [[_ root stylesheet]])
 
-(defmacro explain [x]
+(defmacro explain
+  "Attempts to explain the passed code. Currently only applicable to
+  applying stylesheets: it acts as a delegate to the
+  clarity.style/explain-stylesheet function. For example:
+
+    (use 'clarity.style)
+    (use 'clarity.component)
+    (use 'clarity.dev)
+
+    (defstylesheet the-style
+      (style (type :button)
+         (:background (color :red))))
+
+    (def panel
+      (make :panel (:id :panel)
+        (.add (make :button \"Test\" (:id :button1)))
+        (.add (make :button \"Test 2\" (:id :button2)))))
+
+    (explain (apply-stylesheet panel the-style))
+
+  ...prints:
+
+    --- Showing matches only ---
+    1 out of 1 styles match
+
+    ---
+
+    Style: (type :button)
+    Mutator:
+      (:background (color :red))
+    Matches (2):
+      $panel/$button1
+      $panel/$button2
+
+  You can also pass extra parameters to determine whether non-matches
+  are also shown. Possible values for :show are :all :matched
+  :not-matched. For example:
+
+    (explain (apply-stylesheet panel the-style) :show :all)"
+  
+  [x]
   (if (= #'clarity.style/apply-stylesheet (resolve (first x)))
-    (style/explain-stylesheet x)))
+    (let [[_ root stylesheet & rest] x
+          root (eval root)
+          stylesheet (eval stylesheet)]
+        (apply style/explain-stylesheet root stylesheet rest))))
