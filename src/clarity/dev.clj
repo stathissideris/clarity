@@ -15,7 +15,7 @@
            [java.awt Frame MouseInfo]
            [java.awt.image BufferedImage]))
 
-(def *error-icon* (style/get-laf-property "OptionPane.errorIcon"))
+(def error-icon (style/get-laf-property "OptionPane.errorIcon"))
 
 (defn show-comp
   "Show the passed component in a JFrame."
@@ -34,8 +34,8 @@
 (defn- error-image [msg]
   (let [i (BufferedImage. 600 300 BufferedImage/TYPE_INT_RGB)
         g (.getGraphics i)
-        icon-width (.getIconWidth *error-icon*)]
-    (.paintIcon *error-icon* nil g 0 0)
+        icon-width (.getIconWidth error-icon)]
+    (.paintIcon error-icon nil g 0 0)
     (.drawString g msg (+ 10 icon-width) 20)
     i))
 
@@ -154,6 +154,9 @@
     (.setIcon indicator green-led-on-icon)
     (.setIcon indicator green-led-off-icon)))
 
+(defn- error-label-text [exception]
+  (str "<html>" (.getName (class exception)) " thrown,<br>check console for details"))
+
 (defn watch-component
   [component]
   (let [frame (component-watcher-gui)
@@ -163,6 +166,9 @@
         panel ($ frame :main-panel)
         indicator ($ frame :indicator)
         on-top ($ frame :on-top)
+        error-label (c/make :label
+                            (:foreground (style/color :white))
+                            (:icon error-icon))
 
         get-component
         (cond (symbol? component)
@@ -184,7 +190,12 @@
                  (fn []
                    (util/do-swing
                     (.removeAll panel)
-                    (.add panel (get-component) java.awt.BorderLayout/CENTER)
+                    (try
+                      (.add panel (get-component) java.awt.BorderLayout/CENTER)
+                      (catch Exception e
+                        (do
+                          (.setText error-label (error-label-text e))
+                          (.add panel error-label java.awt.BorderLayout/CENTER))))
                     (update-indicator indicator)
                     (.setText time-label (str "Updated at: "
                                               (str (java.util.Date.))))
