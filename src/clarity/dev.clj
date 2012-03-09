@@ -10,7 +10,9 @@
             [clarity.style :as style]
             [clarity.util :as util]
             [clarity.layout :as layout])
-  (:use [clarity.structure :only [$ comp-seq]])
+  (:use [clarity.structure :only [$ comp-seq with-component]]
+        [clarity.graphics
+         :only [paint-image buffered-image fill rect icon texture-paint]])
   (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
            [java.awt Frame MouseInfo]
            [java.awt.image BufferedImage]))
@@ -30,7 +32,7 @@
      (.pack)
      (:visible true)
      (:always-on-top on-top))))
-  
+
 (defn- error-image [msg]
   (let [i (BufferedImage. 600 300 BufferedImage/TYPE_INT_RGB)
         g (.getGraphics i)
@@ -83,8 +85,39 @@
 
 ;;; watch component
 
-(def watcher-backgrounds
-  (cycle [:black :chequered :white]))
+;; icons and backgrounds for component watcher
+
+(def checkered-bg
+  (paint-image
+   (buffered-image [16 16])
+   (fill (rect 0 0 8 8))
+   (fill (rect 8 8 8 8))
+   (.setPaint (style/color 204 204 204))
+   (fill (rect 8 0 8 8))
+   (fill (rect 0 8 8 8))))
+(def checkered-bg-icon (icon checkered-bg))
+(def black-bg-icon (icon (buffered-image [16 16])))
+(def white-bg-icon
+  (icon (paint-image
+         (buffered-image [16 16])
+         (.setPaint (style/color :white))
+         (fill (rect 0 0 16 16)))))
+(def default-bg-icon
+  (icon (paint-image
+         (buffered-image [16 16])
+         (.setPaint (style/get-laf-property "Panel.background"))
+         (fill (rect 0 0 16 16)))))
+
+(def background-icons
+  {:default default-bg-icon
+   :black black-bg-icon
+   :checkered checkered-bg-icon
+   :white white-bg-icon})
+(def background-paints
+  {:default (style/get-laf-property "Panel.background")
+   :black (style/color :black)
+   :checkered (texture-paint checkered-bg)
+   :white (style/color :white)})
 
 (def green-led-off-icon
   (ImageIcon. (util/load-image-resource "resources/green_led_off.png")))
@@ -93,7 +126,19 @@
   (ImageIcon. (util/load-image-resource "resources/green_led_on.png")))
 
 (defn component-watcher-gui []
-  (let [panel
+  (let [backgrounds (atom (cycle [:default :black :checkered :white]))
+        current-bg #(first @backgrounds)
+        current-paint #(get background-paints (current-bg))
+        current-icon #(get background-icons (current-bg))
+
+        set-next-watcher-background
+        (fn [backgrounds panel button]
+          (swap! backgrounds next)
+          (.repaint panel)
+          (let [icon (current-icon)]
+            (c/do-component button (:icon icon))))
+        
+        panel
         (layout/mig
          (c/make :panel (:id :panel))
          :layout :nogrid :fillx ;;:debug
@@ -105,7 +150,8 @@
          (c/make :check-box "Always on top"
                  (:id :on-top)
                  (:selected true))
-         (c/make :button "back" (:id :background))
+         (c/make :button
+                 (:id :background-button))
          (c/make :label "Update every")
          [:gap :unrelated]
          (c/make :spinner
@@ -116,10 +162,22 @@
          (w/scroll-pane
           (c/make :panel
                   (:id :main-panel)
-                  (:background (style/color :black))))
+                  (:background (style/color :black))
+                  (:impl
+                   (paintComponent
+                    [gfx]
+                    (.setPaint gfx (current-paint))
+                    (fill gfx (.getBounds this))))))
          :grow :span :wrap
          (c/make :label "Not started" (:id :time-label))
          :span)]
+    (with-component panel
+      (c/do-component
+       $background-button
+       (:icon (current-icon))
+       (:on-click
+        (set-next-watcher-background
+         backgrounds $panel $background-button))))
     (c/make :frame
             (:title "Clarity Component Watcher")
             (:always-on-top true)
