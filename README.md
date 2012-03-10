@@ -5,7 +5,17 @@ Clojure GUI library, based on Swing. See the project wiki for details on how to 
 If you are using leiningen, add the following dependency to your
 `project.clj`:
 
-`[clarity "0.5.6"]`
+```
+   [clarity "0.5.6"]
+```
+
+If you are using clojure 1.2.x, add the following dependencies to your
+`project.clj`:
+
+```
+   [clarity "0.5.6"]
+   [org.clojure/clojure-contrib "1.2.0"]
+```
 
 Example of the form facilities:
 
