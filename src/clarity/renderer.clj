@@ -61,3 +61,8 @@
             renderer-fn (apply comp (reverse renderers))]
         (first (renderer-fn component list-component
                       value index selected? focused?))))))
+
+;;example (possibly outdated)
+#_(render/make-list-renderer
+   render/stripy
+   render/stripy-selection)

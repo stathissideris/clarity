@@ -49,3 +49,10 @@
                     (proxy-super remove offset length)))))
       (replace [offset length text attrs]
                (proxy-super replace offset length text attrs)))))
+
+;;example (possibly outdated)
+#_(doc/build-document text-component
+                      (doc/max-len 10)
+                      (doc/min-len 4)
+                      (doc/matches #"[A-F0-9]*")
+                      doc/all-upper)
