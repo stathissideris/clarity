@@ -9,8 +9,8 @@ If you are using leiningen, add the following dependency to your
    [clarity "0.5.6"]
 ```
 
-If you are using clojure 1.2.x, add the following dependencies to your
-`project.clj`:
+If you are using Clojure 1.2.x, make sure that your `project.clj`
+includes clojure-contrib:
 
 ```
    [clarity "0.5.6"]
