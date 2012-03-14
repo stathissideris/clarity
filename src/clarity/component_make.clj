@@ -220,7 +220,7 @@
                             (map (comp symbol make-class-name) component)
                             :else
                             [component])
-                      ['clarity.component.Component])
+                      ['clarity.component.Component 'clojure.lang.IObj])
         init-params (if (contains? special-setters :init)
                       (:init special-setters)
                       const-params)]
@@ -230,6 +230,7 @@
            (proxy [~@clazz] [~@init-params]
              (get_id [] ~'id))]
        (update-proxy ~'result (component-mixin))
+       (update-proxy ~'result (iobj-mixin))
        ~@(map process-special-setter special-setters)
        ~'result)))
 
@@ -321,19 +322,23 @@
                 special-setter-forms
                 event-forms
                 setter-forms
-                implementation-forms]} (parse-component-params args)]
-    #_(println (str "make: " args))
-    #_(println (str "make: " (parse-component-params args)))
-    (if (every? empty? [setter-forms
-                        event-forms
-                        implementation-forms])
-      `(make-component ~(first constructor)
-                       ~(rest constructor)
-                       ~special-setter-forms)
-      `(do-component
-        (make-component ~(first constructor)
-                        ~(rest constructor)
-                        ~special-setter-forms)
-        ~@(concat setter-forms
-                  event-forms
-                  [(concat [:impl] implementation-forms)])))))
+                implementation-forms]} (parse-component-params args)
+                component
+                (if (every? empty? [setter-forms
+                                    event-forms
+                                    implementation-forms])
+                  `(make-component ~(first constructor)
+                                   ~(rest constructor)
+                                   ~special-setter-forms)
+                  `(do-component
+                    (make-component ~(first constructor)
+                                    ~(rest constructor)
+                                    ~special-setter-forms)
+                    ~@(concat setter-forms
+                              event-forms
+                              [(concat [:impl] implementation-forms)])))]
+    `(do (defn line-no-bait# [])
+         (let [meta# (meta #'line-no-bait#)]
+           (ns-unmap *ns* 'line-no-bait#)
+           (with-meta ~component {:creation-line-no (:line meta#)
+                                  :creation-file (:file meta#)})))))

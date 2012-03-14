@@ -53,3 +53,19 @@
 (defn clojure-1-3? []
   (and (= 1 (:major *clojure-version*))
        (= 3 (:minor *clojure-version*))))
+
+(defn convert-stack-trace-element [element]
+  {:class-name (.getClassName element)
+   :file-name (.getFileName element)
+   :line-number (.getLineNumber element)
+   :method-name (.getMethodName element)
+   :is-native-method (.isNativeMethod element)})
+
+(defn project-stack-trace []
+  (map convert-stack-trace-element
+   (->> (Thread/currentThread)
+        (.getStackTrace)
+        (remove
+         #(or (.startsWith (.getClassName %) "java.")
+              (.startsWith (.getClassName %) "clojure.")))
+        (drop 1)))) ;;drop the call to project-stack-trace

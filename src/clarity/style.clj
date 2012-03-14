@@ -7,15 +7,18 @@
   clarity.style
 
   (require [clojure.java.io :as io]
-           [clojure.string :as str]
            [clarity.component :as c]
-           [clarity.structure :as s])
+           [clarity.structure :as s]
+           [clarity.util :as util])
   (import [java.awt Color Paint Stroke BasicStroke GradientPaint
            LinearGradientPaint RadialGradientPaint
            MultipleGradientPaint]
           [java.awt.geom Point2D$Float Point2D$Double]
           [javax.swing BorderFactory]
           [javax.swing.border AbstractBorder]))
+
+(cond (util/clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (util/clojure-1-3?) (require '[clojure.string :as str]))
 
 ;;; look and feel
 (defn set-system-laf []

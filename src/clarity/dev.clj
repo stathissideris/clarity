@@ -10,12 +10,19 @@
             [clarity.style :as style]
             [clarity.util :as util]
             [clarity.layout :as layout])
-  (:use [clarity.structure :only [$ comp-seq with-component]]
+  (:use clojure.walk
+        [clarity.structure :only [$ comp-seq with-component path]]
         [clarity.graphics
          :only [paint-image buffered-image fill rect icon texture-paint]])
   (:import [javax.swing SwingUtilities UIManager JFrame ImageIcon]
            [java.awt Frame MouseInfo]
-           [java.awt.image BufferedImage]))
+           [java.awt.image BufferedImage]
+           [java.io BufferedReader InputStreamReader ByteArrayOutputStream]
+           [org.apache.commons.exec
+            PumpStreamHandler DefaultExecutor ExecuteWatchdog CommandLine]))
+
+(cond (util/clojure-1-2?) (require '[clojure.contrib.str-utils2 :as str])
+      (util/clojure-1-3?) (require '[clojure.string :as str]))
 
 (def error-icon (style/get-laf-property "OptionPane.errorIcon"))
 
@@ -51,30 +58,36 @@
   frame is closed."
   ([image] (watch-image image 15))
   ([image fps]
-     (let [get-image (fn [] (cond (instance? clojure.lang.IDeref image) @image
-                                  (fn? image)
-                                  (try (image)
-                                       (catch Exception e
-                                         (do
-                                           (.printStackTrace e)
-                                           (error-image (str (.getName (class e))
-                                                             ", check your console")))))
-                                  :otherwise image))
+     (let [get-image
+           (fn [] (cond (instance? clojure.lang.IDeref image) @image
+                       (fn? image)
+                       (try (image)
+                            (catch Exception e
+                              (do
+                                (.printStackTrace e)
+                                (error-image (str (.getName (class e))
+                                                  ", check your console")))))
+                       :otherwise image))
+           
            cached-image (ref nil)
-           panel (proxy [javax.swing.JPanel] []
-                   (paintComponent [g]
-                                   (dosync (ref-set cached-image (get-image)))
-                                   (if @cached-image
-                                         (.drawImage g @cached-image 0 0 this)))
-                   (getPreferredSize[] (if @cached-image
-                                         (java.awt.Dimension.
-                                          (.getWidth @cached-image)
-                                          (.getHeight @cached-image))
-                                         (java.awt.Dimension. 100 100))))
-           updater (future
-                    (while true
-                      (Thread/sleep (/ 1000 fps))
-                      (util/do-swing (.repaint panel))))]
+           
+           panel
+           (proxy [javax.swing.JPanel] []
+             (paintComponent [g]
+               (dosync (ref-set cached-image (get-image)))
+               (if @cached-image
+                 (.drawImage g @cached-image 0 0 this)))
+             (getPreferredSize[] (if @cached-image
+                                   (java.awt.Dimension.
+                                    (.getWidth @cached-image)
+                                    (.getHeight @cached-image))
+                                   (java.awt.Dimension. 100 100))))
+           updater
+           (future
+             (while true
+               (Thread/sleep (/ 1000 fps))
+               (util/do-swing (.repaint panel))))]
+       
        (c/make :frame
                (.add panel)
                (.pack)
@@ -125,8 +138,45 @@
 (def green-led-on-icon
   (ImageIcon. (util/load-image-resource "resources/green_led_on.png")))
 
+#_(def #^{:dynamic true} *emacsclient*
+  "/Applications/Emacs.app/Contents/MacOS/bin/emacsclient")
+(def #^{:dynamic true} *emacsclient*
+  "emacsclient")
+
+(defn exec [cmd]
+  (let [out (new ByteArrayOutputStream)
+        err (new ByteArrayOutputStream)
+        stream-handler (new PumpStreamHandler out err)
+        executor (doto (new DefaultExecutor)
+                   (.setExitValues (int-array 2 [0 1]))
+                   (.setStreamHandler stream-handler)
+                   (.setWatchdog (new ExecuteWatchdog 20000)))
+        ;cmd (CommandLine/parse (apply str (interpose " " args)))
+        exit-value (.execute executor cmd)]
+    (println ">" (.toString cmd))
+    {:exit-value exit-value
+     :out (.toString out)
+     :error (.toString err)}))
+
+(defn emacs-jump-to-location [file line-no]
+  (let [file (str "\"" file "\"")
+        emacs-command
+        (str "(progn (find-file " file ") (goto-line " line-no "))")]
+    emacs-command
+    (exec (-> (CommandLine. *emacsclient*)
+              (.addArgument "-n")
+              (.addArgument "--eval")
+              (.addArgument emacs-command false)))))
+
+(defn component-code-creation-location
+  [component]
+  (let [m (meta component)]
+    {:file (:creation-file m)
+     :line (:creation-line-no m)}))
+
 (defn component-watcher-gui []
-  (let [backgrounds (atom (cycle [:default :black :checkered :white]))
+  (let [ide-jump-location (atom nil)
+        backgrounds (atom (cycle [:default :black :checkered :white]))
         current-bg #(first @backgrounds)
         current-paint #(get background-paints (current-bg))
         current-icon #(get background-icons (current-bg))
@@ -137,7 +187,10 @@
           (.repaint panel)
           (let [icon (current-icon)]
             (c/do-component button (:icon icon))))
-        
+
+        path-str (fn [component]
+                   (str/join "/" (map c/debug-name (path component))))
+     
         panel
         (layout/mig
          (c/make :panel (:id :panel))
@@ -169,15 +222,37 @@
                     (.setPaint gfx (current-paint))
                     (fill gfx (.getBounds this))))))
          :grow :span :wrap
-         (c/make :label "Not started" (:id :time-label))
-         :span)]
+         (c/make :label "Not started" (:id :time-label)) :span)]
+
+    ;; wiring
     (with-component panel
+
+      ;;switch background
       (c/do-component
        $background-button
        (:icon (current-icon))
        (:on-click
         (set-next-watcher-background
-         backgrounds $panel $background-button))))
+         backgrounds $panel $background-button)))
+
+      ;;follow mouse movement
+      (c/do-component
+       $main-panel
+       (:on-mouse-moved
+        (let [point (.getPoint event)
+              component (SwingUtilities/getDeepestComponentAt
+                         this (. point x) (. point y))
+              m (meta component)
+              new-jump-location (component-code-creation-location component)]
+          (when (and component
+                     (not= @ide-jump-location new-jump-location))
+            (do
+              #_(println component)
+              #_(println m)
+              #_(println "--")
+              (emacs-jump-to-location (:creation-file m) (:creation-line-no m))
+              (reset! ide-jump-location new-jump-location)))))))
+    
     (c/make :frame
             (:title "Clarity Component Watcher")
             (:always-on-top true)

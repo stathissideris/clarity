@@ -22,6 +22,11 @@
      "add_category" (fn [this c] (alter cat conj c))
      "remove_category" (fn [this c] (alter cat disj c))}))
 
+(defn iobj-mixin []
+  (let [m (atom {})]
+    {"meta" (fn [this] @m)
+     "withMeta" (fn [this new-meta] (do (reset! m new-meta) this))}))
+
 (defn component?
   "Tests whether x satisfies the clarity.component.Component
   protocol."
